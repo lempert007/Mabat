@@ -1,0 +1,32 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // Uses a PostgreSQL that is already running; only starts the container if nothing answers.
+      "label": "db: up",
+      "type": "shell",
+      "command": "./scripts/ensure-db.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "dedicated" }
+    },
+    {
+      "label": "db: migrate",
+      "type": "shell",
+      "command": "uv run alembic upgrade head",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "dependsOn": "db: up",
+      "problemMatcher": [],
+      "presentation": { "reveal": "silent", "panel": "dedicated" }
+    },
+    {
+      "label": "db: reset (drops every table)",
+      "type": "shell",
+      "command": "uv run alembic downgrade base && uv run alembic upgrade head",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "dependsOn": "db: up",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated" }
+    }
+  ]
+}

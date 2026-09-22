@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+backend/.venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+frontend/dist/
+*.local
+
+# Env & data
+.env
+storage/
+*.log
+
+# OS / editor
+.DS_Store
+.idea/
+
+# Personal editor settings stay out; the shared run configuration is committed.
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
