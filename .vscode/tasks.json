@@ -6,6 +6,9 @@
       "label": "db: up",
       "type": "shell",
       "command": "./scripts/ensure-db.sh",
+      "windows": {
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/ensure-db.ps1"
+      },
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": [],
       "presentation": { "reveal": "silent", "panel": "dedicated" }
@@ -23,6 +26,8 @@
       "label": "db: reset (drops every table)",
       "type": "shell",
       "command": "uv run alembic downgrade base && uv run alembic upgrade head",
+      // Windows PowerShell 5.1 has no "&&".
+      "windows": { "command": "uv run alembic downgrade base; if ($?) { uv run alembic upgrade head }" },
       "options": { "cwd": "${workspaceFolder}/backend" },
       "dependsOn": "db: up",
       "problemMatcher": [],

@@ -40,6 +40,22 @@ cd ../frontend && npm run dev                   # http://localhost:5173 (proxies
 `scripts/ensure-db.sh` leaves an existing PostgreSQL alone, so a local install is used as-is and
 the container is only started when nothing else answers.
 
+### On Windows
+
+The VS Code launch and tasks carry Windows overrides, so **Mabat: full stack** works as-is. The
+database script there is `scripts/ensure-db.ps1`: it uses a running PostgreSQL, else starts the
+`postgresql*` Windows service, else the container.
+
+```powershell
+winget install PostgreSQL.PostgreSQL.16          # registers a service that starts with Windows
+& "C:\Program Files\PostgreSQL\16\bin\psql.exe" -U postgres -h localhost `
+  -c "CREATE ROLE mabat LOGIN CREATEDB PASSWORD 'change-me';" -c "CREATE DATABASE mabat OWNER mabat;"
+Copy-Item .env.example .env
+powershell -ExecutionPolicy Bypass -File scripts\ensure-db.ps1
+cd backend; uv sync; uv run alembic upgrade head; uv run uvicorn app.main:app --reload
+cd ..\frontend; npm install; npm run dev
+```
+
 The first editor account comes from `MABAT_INITIAL_EDITOR_USERNAME` / `MABAT_INITIAL_EDITOR_PASSWORD`
 in `.env` (created when the users table is empty). More editors: the **Editors** button in the gallery,
 or `uv run python -m app.cli create-editor <name>`.
@@ -76,8 +92,11 @@ a gatehouse and bridge, a keep with corner turrets, a chapel, and a switchback r
 It is generated rather than downloaded, so it carries no licence and can be rebuilt at any time.
 
 ```bash
-cd backend && uv run python ../scripts/make_demo_model.py ../castle.glb
+cd backend && uv run --with scipy python ../scripts/make_demo_model.py ../castle.glb
 ```
+
+`scipy` is only needed here, not by the app. Without it, trimesh computes the terrain's vertex
+normals in a pure-Python loop and the script runs for many minutes instead of seconds.
 
 Upload the result as a project. Roughly 200,000 triangles and 5 MB.
 

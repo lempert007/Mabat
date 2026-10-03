@@ -12,6 +12,7 @@
       "args": ["app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"],
       "cwd": "${workspaceFolder}/backend",
       "python": "${workspaceFolder}/backend/.venv/bin/python",
+      "windows": { "python": "${workspaceFolder}/backend/.venv/Scripts/python.exe" },
       "preLaunchTask": "db: migrate",
       "subProcess": true,
       "justMyCode": false,

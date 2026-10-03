@@ -3,7 +3,9 @@
 Generated rather than downloaded so the sample carries no licence, can be regenerated at any
 time, and has named features at known coordinates worth pinning points to.
 
-    cd backend && uv run python ../scripts/make_demo_model.py ../storage/demo/castle.glb
+    cd backend && uv run --with scipy python ../scripts/make_demo_model.py ../storage/demo/castle.glb
+
+scipy lets trimesh compute the terrain normals in seconds; without it they take many minutes.
 """
 
 from __future__ import annotations
