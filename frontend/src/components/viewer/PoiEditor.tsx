@@ -44,12 +44,13 @@ const draftFrom = (poi: Poi): Draft => ({
 export function PoiEditor({ poi, categories, onDone, onDeleted }: PoiEditorProps) {
   const [draft, setDraft] = useState<Draft>(() => draftFrom(poi));
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const update = useUpdatePoi(poi.projectId);
   const remove = useDeletePoi(poi.projectId);
   const cameraApi = useViewerStore((s) => s.cameraApi);
   const setMovingPoi = useViewerStore((s) => s.setMovingPoi);
   const movingPoiId = useViewerStore((s) => s.movingPoiId);
+  const setEditorDirty = useViewerStore((s) => s.setEditorDirty);
+  const whenEditorClean = useViewerStore((s) => s.whenEditorClean);
 
   useEffect(() => {
     setDraft(draftFrom(poi));
@@ -62,7 +63,17 @@ export function PoiEditor({ poi, categories, onDone, onDeleted }: PoiEditorProps
   const dirty = !deepEqual(draft, saved);
   const cameraChanged = !deepEqual(draft.camera, saved.camera);
 
-  const close = () => (dirty ? setConfirmDiscard(true) : onDone());
+  // Anything that would take the editor away asks first while there is something to lose.
+  useEffect(() => {
+    setEditorDirty(dirty);
+    if (!dirty) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty, setEditorDirty]);
+  useEffect(() => () => setEditorDirty(false), [setEditorDirty]);
+
+  const close = () => whenEditorClean(onDone);
 
   const save = () => {
     update.mutate(
@@ -162,7 +173,7 @@ export function PoiEditor({ poi, categories, onDone, onDeleted }: PoiEditorProps
         </Field>
 
         <Field label={t.panel.content}>
-          <BlockEditorList blocks={draft.blocks} projectId={poi.projectId} poiId={poi.id} onChange={(blocks) => patch({ blocks })} />
+          <BlockEditorList blocks={draft.blocks} projectId={poi.projectId} poiId={poi.id} onChange={(update) => setDraft((current) => ({ ...current, blocks: update(current.blocks) }))} />
         </Field>
       </div>
 
@@ -171,7 +182,7 @@ export function PoiEditor({ poi, categories, onDone, onDeleted }: PoiEditorProps
           {dirty && (
             <>
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-              {t.panel.unsaved}
+              {t.common.unsaved}
             </>
           )}
         </span>
@@ -189,17 +200,6 @@ export function PoiEditor({ poi, categories, onDone, onDeleted }: PoiEditorProps
         </Button>
       </footer>
 
-      <ConfirmDialog
-        open={confirmDiscard}
-        title={t.panel.discardTitle}
-        body={t.panel.discardBody}
-        confirmLabel={t.panel.discardConfirm}
-        onClose={() => setConfirmDiscard(false)}
-        onConfirm={() => {
-          setConfirmDiscard(false);
-          onDone();
-        }}
-      />
       <ConfirmDialog
         open={confirmDelete}
         title={t.panel.deletePoint}

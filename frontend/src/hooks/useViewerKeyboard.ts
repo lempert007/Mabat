@@ -11,16 +11,19 @@ const isTyping = (target: EventTarget | null) => {
   return Boolean(el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable));
 };
 
+/** A dialog is on top and owns the keyboard, including its own Escape. */
+const dialogOpen = () => document.querySelector('[aria-modal="true"]') !== null;
+
 export function useViewerKeyboard({ next, prev }: ViewerKeyboardHandlers) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (isTyping(event.target)) return;
+      if (isTyping(event.target) || dialogOpen()) return;
       const state = useViewerStore.getState();
       switch (event.key) {
         case 'Escape':
           if (state.movingPoiId) state.setMovingPoi(null);
           else if (state.tourPlaying) state.setTourPlaying(false);
-          else if (state.selectedPoiId) state.selectPoi(null);
+          else if (state.selectedPoiId) state.whenEditorClean(() => state.selectPoi(null));
           break;
         // The interface reads right to left, so the right arrow steps backwards.
         case 'ArrowRight':

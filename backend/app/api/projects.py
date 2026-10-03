@@ -17,9 +17,10 @@ from app.services import projects as project_service
 from app.services import storage
 from app.services import transfer as transfer_service
 from app.services.conversion import NEEDS_EXPORT, SUPPORTED_UPLOAD_FORMATS
-from app.services.images import write_cover
 
 router = APIRouter(prefix="/projects", tags=["projects"])
+
+_TOO_LARGE = "הקובץ גדול מדי."
 
 
 def to_out(project: Project, poi_count: int) -> ProjectOut:
@@ -76,8 +77,8 @@ async def create_project(
             + ", ".join(sorted(SUPPORTED_UPLOAD_FORMATS))
         )
         raise HTTPException(http.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail) from exc
-    except project_service.UploadTooLarge as exc:
-        raise HTTPException(http.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "הקובץ גדול מדי.") from exc
+    except storage.UploadTooLarge as exc:
+        raise HTTPException(http.HTTP_413_REQUEST_ENTITY_TOO_LARGE, _TOO_LARGE) from exc
     background.add_task(project_service.process_project, project.id)
     return to_out(project, 0)
 
@@ -114,6 +115,10 @@ async def reprocess_project(
     project: Project = Depends(get_project_or_404),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectOut:
+    try:
+        project = await project_service.queue_processing(db, project)
+    except project_service.AlreadyProcessing as exc:
+        raise HTTPException(http.HTTP_409_CONFLICT, "הדגם כבר בעיבוד.") from exc
     background.add_task(project_service.process_project, project.id)
     return to_out(project, await project_service.poi_count(db, project.id))
 
@@ -160,16 +165,15 @@ async def set_thumbnail(
     project: Project = Depends(get_project_or_404),
     db: AsyncSession = Depends(get_db),
 ) -> ProjectOut:
+    not_an_image = HTTPException(http.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "צריך לשלוח קובץ תמונה.")
     if not (file.content_type or "").startswith("image/"):
-        raise HTTPException(http.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "צריך לשלוח קובץ תמונה.")
-    raw = storage.project_dir(project.id) / "thumbnail.upload"
-    raw.write_bytes(await file.read())
-    target = storage.thumbnail_path(project.id)
+        raise not_an_image
     try:
-        write_cover(raw, target)
-    finally:
-        raw.unlink(missing_ok=True)
-    project = await project_service.set_thumbnail(db, project, target)
+        project = await project_service.save_thumbnail(db, project, file)
+    except project_service.UnreadableCover as exc:
+        raise not_an_image from exc
+    except storage.UploadTooLarge as exc:
+        raise HTTPException(http.HTTP_413_REQUEST_ENTITY_TOO_LARGE, _TOO_LARGE) from exc
     return to_out(project, await project_service.poi_count(db, project.id))
 
 

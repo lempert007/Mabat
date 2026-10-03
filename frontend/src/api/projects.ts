@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, uploadForm } from './client';
-import { queryKeys } from './queryKeys';
+import { queryKeys, refreshProjectList } from './queryKeys';
+import { deepEqual } from '@/lib/deepEqual';
 import type { Project, ProjectStage, ProjectUpdate } from '@/types/api';
 
 const isBusy = (project: Project) => project.status === 'uploaded' || project.status === 'processing';
@@ -45,7 +46,7 @@ export function useCreateProject() {
       form.append('file', file);
       return uploadForm<Project>('/projects', form, { onProgress });
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projects }),
+    onSuccess: () => refreshProjectList(queryClient),
   });
 }
 
@@ -53,9 +54,15 @@ export function useUpdateProject(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: ProjectUpdate) => api.patch<Project>(`/projects/${id}`, data),
-    onSuccess: (project) => {
-      queryClient.setQueryData(queryKeys.project(id), project);
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+    onSuccess: (project, sent) => {
+      // Settings preview in the cache before they are saved. If the editor has moved on since
+      // this request left, keep what they see now rather than snapping back to what was sent.
+      queryClient.setQueryData<Project>(queryKeys.project(id), (current) =>
+        current && sent.settings && !deepEqual(current.settings, sent.settings)
+          ? { ...project, settings: current.settings }
+          : project,
+      );
+      void refreshProjectList(queryClient);
     },
   });
 }
@@ -64,7 +71,7 @@ export function useReprocessProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.post<Project>(`/projects/${id}/reprocess`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projects }),
+    onSuccess: () => refreshProjectList(queryClient),
   });
 }
 
@@ -76,7 +83,7 @@ export function useSetProjectStage() {
       api.patch<Project>(`/projects/${id}`, { stage }),
     onSuccess: (project) => {
       queryClient.setQueryData(queryKeys.project(project.id), project);
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      void refreshProjectList(queryClient);
     },
   });
 }
@@ -85,7 +92,7 @@ export function useDeleteProject() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => api.delete(`/projects/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.projects }),
+    onSuccess: () => refreshProjectList(queryClient),
   });
 }
 
@@ -99,7 +106,7 @@ export function useSetProjectThumbnail(id: string) {
     },
     onSuccess: (project) => {
       queryClient.setQueryData(queryKeys.project(id), project);
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      void refreshProjectList(queryClient);
     },
   });
 }

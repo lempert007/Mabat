@@ -1,10 +1,11 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
-
 from app.schemas.blocks import Block
-from app.schemas.common import ApiModel, CameraPose, Vec3
+from app.schemas.common import ApiModel, CameraPose, Trimmed, Vec3
+
+PoiTitle = Trimmed(160)
+PoiIdentifier = Trimmed(32)
 
 
 class PoiOut(ApiModel):
@@ -26,8 +27,8 @@ class PoiOut(ApiModel):
 
 
 class PoiCreate(ApiModel):
-    title: str = Field(default="נקודה חדשה", min_length=1, max_length=160)
-    identifier: str | None = Field(default=None, min_length=1, max_length=32)
+    title: PoiTitle = "נקודה חדשה"
+    identifier: PoiIdentifier | None = None
     summary: str = ""
     category_id: UUID | None = None
     position: Vec3
@@ -37,8 +38,8 @@ class PoiCreate(ApiModel):
 
 
 class PoiUpdate(ApiModel):
-    title: str | None = Field(default=None, min_length=1, max_length=160)
-    identifier: str | None = Field(default=None, min_length=1, max_length=32)
+    title: PoiTitle | None = None
+    identifier: PoiIdentifier | None = None
     summary: str | None = None
     category_id: UUID | None = None
     clear_category: bool = False

@@ -2,15 +2,13 @@
 
 import asyncio
 import logging
-from pathlib import Path
 from uuid import UUID
 
-import aiofiles
 from fastapi import UploadFile
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.exc import StaleDataError
 
-from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models import Category, Poi, Project
 from app.models.project import ProjectStage, ProjectStatus
@@ -22,6 +20,7 @@ from app.services.conversion import (
     convert_to_glb,
     extension_of,
 )
+from app.services.images import UnreadableImage, write_cover
 
 log = logging.getLogger(__name__)
 
@@ -33,20 +32,34 @@ DEFAULT_CATEGORIES = [
 ]
 
 
-class UploadTooLarge(Exception):
-    pass
+# Shown when a conversion was cut short by the server stopping, so the editor can retry it.
+INTERRUPTED_MESSAGE = "העיבוד נקטע כשהשרת הופעל מחדש. אפשר לנסות שוב."
+UNEXPECTED_MESSAGE = "אירעה תקלה בעיבוד הדגם."
+
+_BUSY = (ProjectStatus.UPLOADED, ProjectStatus.PROCESSING)
 
 
 class UnsupportedFormat(Exception):
     pass
 
 
+class AlreadyProcessing(Exception):
+    """A conversion for this project is queued or running."""
+
+
+class UnreadableCover(Exception):
+    """The uploaded cover is not an image Pillow can read."""
+
+
 def model_version(project: Project) -> str | None:
-    """Identifies the current model file, so a cached copy is replaced the moment it changes."""
+    """Identifies the current model file, so a cached copy is replaced the moment it changes.
+
+    Nanoseconds, so a model reprocessed within the same second still gets a new version.
+    """
     if project.model_path is None:
         return None
     try:
-        return str(int(storage.absolute_from_root(project.model_path).stat().st_mtime))
+        return str(storage.absolute_from_root(project.model_path).stat().st_mtime_ns)
     except (OSError, ValueError):
         return None
 
@@ -73,18 +86,6 @@ async def poi_count(db: AsyncSession, project_id: UUID) -> int:
     return int(await db.scalar(select(func.count(Poi.id)).where(Poi.project_id == project_id)) or 0)
 
 
-async def _save_upload(upload: UploadFile, target: Path) -> int:
-    limit = get_settings().max_upload_bytes
-    written = 0
-    async with aiofiles.open(target, "wb") as out:
-        while chunk := await upload.read(1024 * 1024):
-            written += len(chunk)
-            if written > limit:
-                raise UploadTooLarge()
-            await out.write(chunk)
-    return written
-
-
 async def create_project(
     db: AsyncSession,
     *,
@@ -99,7 +100,8 @@ async def create_project(
         raise UnsupportedFormat(ext)
 
     project = Project(
-        name=name.strip(),
+        # A name of only spaces passes the form's length check; fall back to the file's name.
+        name=name.strip() or filename.rsplit(".", 1)[0],
         description=description.strip(),
         source_filename=filename,
         source_format=ext,
@@ -112,7 +114,7 @@ async def create_project(
 
     storage.ensure_project_dirs(project.id)
     try:
-        await _save_upload(upload, storage.source_dir(project.id) / filename)
+        await storage.write_upload(upload, storage.source_dir(project.id) / filename)
     except Exception:
         storage.remove_project_dir(project.id)
         await db.rollback()
@@ -124,6 +126,31 @@ async def create_project(
     await db.commit()
     await db.refresh(project)
     return project
+
+
+async def queue_processing(db: AsyncSession, project: Project) -> Project:
+    """Mark a project for another conversion attempt. The caller schedules `process_project`."""
+    if project.status in _BUSY:
+        raise AlreadyProcessing(project.id)
+    project.status = ProjectStatus.UPLOADED
+    project.error_message = None
+    await db.commit()
+    await db.refresh(project)
+    return project
+
+
+async def fail_interrupted_processing(db: AsyncSession) -> int:
+    """Conversions run inside the server process, so a restart abandons any that were running.
+
+    Left alone they would read "processing" forever. Marking them failed lets the editor retry.
+    """
+    result = await db.execute(
+        update(Project)
+        .where(Project.status.in_(_BUSY))
+        .values(status=ProjectStatus.FAILED, error_message=INTERRUPTED_MESSAGE)
+    )
+    await db.commit()
+    return result.rowcount or 0
 
 
 async def process_project(project_id: UUID) -> None:
@@ -147,12 +174,16 @@ async def process_project(project_id: UUID) -> None:
         except Exception:
             log.exception("Unexpected conversion error for %s", project_id)
             project.status = ProjectStatus.FAILED
-            project.error_message = "אירעה תקלה בעיבוד הדגם."
+            project.error_message = UNEXPECTED_MESSAGE
         else:
             project.status = ProjectStatus.READY
             project.model_path = storage.relative_to_root(output)
             project.model_stats = stats.as_dict()
-        await db.commit()
+        try:
+            await db.commit()
+        except StaleDataError:
+            # The project was deleted while its model was converting; there is nothing to record.
+            log.info("Project %s was deleted during conversion", project_id)
 
 
 async def update_project(
@@ -182,8 +213,18 @@ async def update_project(
     return project
 
 
-async def set_thumbnail(db: AsyncSession, project: Project, thumbnail: Path) -> Project:
-    project.thumbnail_path = storage.relative_to_root(thumbnail)
+async def save_thumbnail(db: AsyncSession, project: Project, upload: UploadFile) -> Project:
+    """Store a viewer capture as the project's gallery cover."""
+    raw = storage.project_dir(project.id) / "thumbnail.upload"
+    target = storage.thumbnail_path(project.id)
+    await storage.write_upload(upload, raw)
+    try:
+        await asyncio.to_thread(write_cover, raw, target)
+    except UnreadableImage as exc:
+        raise UnreadableCover() from exc
+    finally:
+        raw.unlink(missing_ok=True)
+    project.thumbnail_path = storage.relative_to_root(target)
     await db.commit()
     await db.refresh(project)
     return project

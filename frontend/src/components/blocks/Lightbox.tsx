@@ -18,8 +18,9 @@ export function Lightbox({ items, index, onClose, onIndex }: LightboxProps) {
     if (index === null) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
-      if (event.key === 'ArrowRight') onIndex((index + 1) % items.length);
-      if (event.key === 'ArrowLeft') onIndex((index - 1 + items.length) % items.length);
+      // Right to left: the right arrow, like the button on the right, goes back.
+      if (event.key === 'ArrowRight') onIndex((index - 1 + items.length) % items.length);
+      if (event.key === 'ArrowLeft') onIndex((index + 1) % items.length);
       event.stopPropagation();
     };
     window.addEventListener('keydown', onKey, true);

@@ -94,6 +94,10 @@ STORAGE_ROOT/
    - `.fbx, .3ds, .x3d, .usd*` → Blender headless if `blender` is on `PATH`, otherwise the upload fails with a clear message. COLLADA lists Blender as a second strategy when it is installed, because exporters disagree and Blender reads the awkward files.
    - `.skp` → refused with export instructions. SketchUp's SDK has no Linux build, so no server-side converter can exist; the useful thing to do is name the export that works.
 4. Stats (triangle count, bounds, extents) are written to `model_stats`. Status → `ready`.
+   The GLB is written beside the live one and swapped in only on success, so a failed retry keeps
+   the working model. A retry is refused while a conversion is queued or running, and since
+   conversions run in the server process, any left `processing` by a restart are marked failed
+   at startup so they can be retried.
 5. The first time an editor opens a ready project with no thumbnail, the viewer captures the canvas and posts it. "Set cover" in the viewer does the same on demand.
 
 ## 6. API (prefix `/api`)

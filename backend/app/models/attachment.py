@@ -18,7 +18,10 @@ class Attachment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "attachments"
 
     project_id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False
+        PG_UUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     poi_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True), ForeignKey("pois.id", ondelete="SET NULL")

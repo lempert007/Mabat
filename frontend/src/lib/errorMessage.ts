@@ -13,6 +13,8 @@ export function errorMessage(error: unknown): string {
     if (error.status === 401) return t.errors.unauthorized;
     if (error.status === 403) return t.errors.forbidden;
     if (error.message) return error.message;
+    if (error.status === 413) return t.errors.tooLarge;
+    if (error.status === 422) return t.errors.invalid;
   }
   return t.common.somethingWentWrong;
 }

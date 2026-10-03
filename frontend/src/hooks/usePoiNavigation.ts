@@ -27,6 +27,7 @@ export interface PoiNavigation {
 export function usePoiNavigation(pois: Poi[], radius: number): PoiNavigation {
   const selectedPoiId = useViewerStore((s) => s.selectedPoiId);
   const selectPoi = useViewerStore((s) => s.selectPoi);
+  const whenEditorClean = useViewerStore((s) => s.whenEditorClean);
   const cameraApi = useViewerStore((s) => s.cameraApi);
 
   const ordered = useMemo(() => [...pois].sort((a, b) => a.sortOrder - b.sortOrder), [pois]);
@@ -42,11 +43,12 @@ export function usePoiNavigation(pois: Poi[], radius: number): PoiNavigation {
   );
 
   const goTo = useCallback(
-    (poi: Poi, smooth = true) => {
-      selectPoi(poi.id);
-      flyTo(poi, smooth);
-    },
-    [selectPoi, flyTo],
+    (poi: Poi, smooth = true) =>
+      whenEditorClean(() => {
+        selectPoi(poi.id);
+        flyTo(poi, smooth);
+      }),
+    [selectPoi, flyTo, whenEditorClean],
   );
 
   const latest = useRef({ ordered, index, goTo });

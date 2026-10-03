@@ -5,8 +5,12 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Poi
+from app.models import Category, Poi
 from app.schemas.poi import PoiCreate, PoiUpdate
+
+
+class CategoryNotInProject(Exception):
+    """A point was given a category that belongs to some other project."""
 
 
 async def list_pois(db: AsyncSession, project_id: UUID) -> list[Poi]:
@@ -20,19 +24,29 @@ async def get_poi(db: AsyncSession, poi_id: UUID) -> Poi | None:
     return await db.get(Poi, poi_id)
 
 
-async def _next_identifier(db: AsyncSession, project_id: UUID) -> str:
-    existing = set(
-        (await db.scalars(select(Poi.identifier).where(Poi.project_id == project_id))).all()
-    )
-    number = len(existing) + 1
-    while (candidate := f"P-{number:02d}") in existing:
+def free_identifier(taken: set[str]) -> str:
+    """The first P-NN not already in `taken`, starting from the count so the search is short."""
+    number = len(taken) + 1
+    while (candidate := f"P-{number:02d}") in taken:
         number += 1
     return candidate
 
 
-async def _next_sort_order(db: AsyncSession, project_id: UUID) -> int:
+async def taken_identifiers(db: AsyncSession, project_id: UUID) -> set[str]:
+    return set((await db.scalars(select(Poi.identifier).where(Poi.project_id == project_id))).all())
+
+
+async def next_sort_order(db: AsyncSession, project_id: UUID) -> int:
     current = await db.scalar(select(func.max(Poi.sort_order)).where(Poi.project_id == project_id))
-    return (current or 0) + 1
+    return 0 if current is None else current + 1
+
+
+async def _check_category(db: AsyncSession, project_id: UUID, category_id: UUID | None) -> None:
+    if category_id is None:
+        return
+    category = await db.get(Category, category_id)
+    if category is None or category.project_id != project_id:
+        raise CategoryNotInProject(category_id)
 
 
 def _dump_blocks(blocks) -> list[dict]:
@@ -42,9 +56,11 @@ def _dump_blocks(blocks) -> list[dict]:
 async def create_poi(
     db: AsyncSession, project_id: UUID, data: PoiCreate, user_id: UUID | None
 ) -> Poi:
+    await _check_category(db, project_id, data.category_id)
+    identifier = (data.identifier or "").strip()
     poi = Poi(
         project_id=project_id,
-        identifier=data.identifier or await _next_identifier(db, project_id),
+        identifier=identifier or free_identifier(await taken_identifiers(db, project_id)),
         title=data.title.strip(),
         summary=data.summary.strip(),
         category_id=data.category_id,
@@ -52,7 +68,7 @@ async def create_poi(
         normal=data.normal.model_dump(),
         camera=data.camera.model_dump(by_alias=True) if data.camera else None,
         blocks=_dump_blocks(data.blocks),
-        sort_order=await _next_sort_order(db, project_id),
+        sort_order=await next_sort_order(db, project_id),
         created_by=user_id,
         updated_by=user_id,
     )
@@ -63,9 +79,11 @@ async def create_poi(
 
 
 async def update_poi(db: AsyncSession, poi: Poi, data: PoiUpdate, user_id: UUID | None) -> Poi:
+    if not data.clear_category:
+        await _check_category(db, poi.project_id, data.category_id)
     if data.title is not None:
         poi.title = data.title.strip()
-    if data.identifier is not None:
+    if data.identifier is not None and data.identifier.strip():
         poi.identifier = data.identifier.strip()
     if data.summary is not None:
         poi.summary = data.summary.strip()

@@ -11,6 +11,7 @@ that runs on the server can open one. Those uploads are turned away with export 
 rather than a generic "unsupported format", see NEEDS_EXPORT.
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -108,7 +109,7 @@ def _find_main_file(folder: Path) -> Path:
         if guidance:
             raise ConversionError(guidance)
     raise ConversionError(
-        f"The archive does not contain a supported model file ({', '.join(_PRIORITY)})."
+        "בקובץ הדחוס אין קובץ דגם שאפשר לקרוא. הפורמטים הנתמכים: " + ", ".join(_PRIORITY)
     )
 
 
@@ -265,13 +266,23 @@ def convert_to_glb(source: Path, output: Path) -> ModelStats:
         raise ConversionError(f"פורמט דגם לא נתמך: '.{ext}'.")
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    for index, strategy in enumerate(strategies):
-        try:
-            return strategy(source, output)
-        except ConversionError:
-            if index == len(strategies) - 1:
-                raise
-        except Exception as exc:  # trimesh raises many exception types
-            if index == len(strategies) - 1:
-                raise ConversionError(f"לא הצלחנו לקרוא את הדגם: {exc}") from exc
+    # Strategies write beside the live model and it is swapped in only on success, so a failed
+    # retry leaves the working model alone and no strategy can mistake an old file for its own.
+    partial = output.with_name(f"{output.stem}.partial{output.suffix}")
+    try:
+        for index, strategy in enumerate(strategies):
+            partial.unlink(missing_ok=True)
+            try:
+                stats = strategy(source, partial)
+            except ConversionError:
+                if index == len(strategies) - 1:
+                    raise
+            except Exception as exc:  # trimesh raises many exception types
+                if index == len(strategies) - 1:
+                    raise ConversionError(f"לא הצלחנו לקרוא את הדגם: {exc}") from exc
+            else:
+                os.replace(partial, output)
+                return stats
+    finally:
+        partial.unlink(missing_ok=True)
     raise AssertionError("unreachable")  # pragma: no cover

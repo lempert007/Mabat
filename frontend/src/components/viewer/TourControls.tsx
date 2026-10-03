@@ -20,6 +20,7 @@ export function TourControls({ total, index, onPrev, onNext, onStart }: TourCont
   const setPlaying = useViewerStore((s) => s.setTourPlaying);
   const introVisible = useViewerStore((s) => s.introVisible);
   const selectPoi = useViewerStore((s) => s.selectPoi);
+  const whenEditorClean = useViewerStore((s) => s.whenEditorClean);
 
   useEffect(() => {
     if (!playing) return;
@@ -76,7 +77,7 @@ export function TourControls({ total, index, onPrev, onNext, onStart }: TourCont
               size="sm"
               onClick={() => {
                 setPlaying(false);
-                selectPoi(null);
+                whenEditorClean(() => selectPoi(null));
               }}
             >
               <Square size={13} />

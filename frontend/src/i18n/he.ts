@@ -18,6 +18,11 @@ export const he = {
     confirmDelete: 'כן, למחוק',
     somethingWentWrong: 'משהו לא הסתדר. כדאי לנסות שוב.',
     more: 'עוד',
+    justNow: 'ממש עכשיו',
+    unsaved: 'יש שינויים שלא נשמרו',
+    discardTitle: 'לצאת בלי לשמור?',
+    discardBody: 'השינויים שעשיתם יאבדו.',
+    discardConfirm: 'לצאת בלי לשמור',
   },
   login: {
     title: 'ברוכים הבאים',
@@ -43,8 +48,8 @@ export const he = {
     empty: 'עוד אין כאן פרויקטים',
     emptyEditor: 'כל מה שחסר זה דגם ראשון.',
     emptyGuest: 'ברגע שעורך יעלה דגם, הוא יופיע כאן.',
-    points: 'נקודות',
-    point: 'נקודה',
+    onePoint: 'נקודה אחת',
+    manyPoints: '{count} נקודות',
     processing: 'מכינים את הדגם',
     failed: 'ההכנה לא הצליחה',
     uploaded: 'בתור',
@@ -68,7 +73,6 @@ export const he = {
     formats: 'GLB, glTF, COLLADA, OBJ ו-KMZ (ZIP עם טקסטורות), STL, PLY ועוד',
     uploading: 'מעלים',
     create: 'להעלות ולהתחיל',
-    tooLarge: 'הקובץ גדול מדי. נסו קובץ קטן יותר.',
     sketchup: {
       title: 'קובץ SketchUp צריך ייצוא קצר לפני שמעלים',
       body: 'הפורמט הזה נפתח רק בתוך SketchUp עצמו, אז נעבור דרך ייצוא מהיר. זה לוקח פחות מדקה.',
@@ -116,6 +120,7 @@ export const he = {
     controlsHintEditor: 'לחיצה ימנית לתפריט',
     processingBody: 'עוד מכינים את הדגם. הדף יתעדכן לבד.',
     failedBody: 'ההכנה לא הצליחה.',
+    loadFailed: 'לא הצלחנו לטעון את הנקודות של הפרויקט. כדאי לרענן את הדף.',
   },
   panel: {
     category: 'קטגוריה',
@@ -132,7 +137,6 @@ export const he = {
     deletePoint: 'מחיקת הנקודה',
     deletePointBody: 'הנקודה והתוכן שלה יימחקו.',
     editPoint: 'עריכת נקודה',
-    unsaved: 'יש שינויים שלא נשמרו',
     discardTitle: 'לצאת בלי לשמור?',
     discardBody: 'השינויים שעשיתם בנקודה הזו יאבדו.',
     discardConfirm: 'לצאת בלי לשמור',
@@ -160,6 +164,7 @@ export const he = {
     addRow: 'הוספת שורה',
     addColumn: 'הוספת עמודה',
     column: 'עמודה',
+    untitledDocument: 'מסמך',
     addImages: 'הוספת תמונות',
     addDocuments: 'הוספת קובצי PDF',
     caption: 'כיתוב',
@@ -224,6 +229,8 @@ export const he = {
     name: 'שם',
     color: 'צבע',
     deleteHint: 'הנקודות יישארו, רק בלי הקטגוריה.',
+    deleteTitle: 'למחוק את הקטגוריה?',
+    deleteBody: 'הקטגוריה תוסר מכל הנקודות שמשויכות אליה. הנקודות עצמן יישארו.',
   },
   users: {
     title: 'עורכים',
@@ -237,6 +244,8 @@ export const he = {
     network: 'אין קשר עם השרת.',
     unauthorized: 'החיבור פג. כדאי להיכנס שוב.',
     forbidden: 'אין לכם הרשאה לזה.',
+    invalid: 'חלק מהפרטים לא תקינים. כדאי לבדוק ולנסות שוב.',
+    tooLarge: 'הקובץ גדול מדי. נסו קובץ קטן יותר.',
   },
 } as const;
 

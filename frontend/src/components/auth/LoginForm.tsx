@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/Input';
 import { Field } from '@/components/ui/Field';
 import { useJoinAsGuest, useLogin } from '@/api/auth';
 import { ApiError } from '@/api/client';
+import { errorMessage } from '@/lib/errorMessage';
 import { t } from '@/i18n/he';
 
 interface LoginFormProps {
@@ -26,7 +27,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
       {
         onSuccess,
         onError: (err) =>
-          setError(err instanceof ApiError && err.status === 401 ? t.login.failed : err.message),
+          setError(err instanceof ApiError && err.status === 401 ? t.login.failed : errorMessage(err)),
       },
     );
   };
@@ -80,7 +81,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           block
           loading={guest.isPending}
           icon={<Eye size={16} />}
-          onClick={() => guest.mutate(undefined, { onSuccess })}
+          onClick={() => guest.mutate(undefined, { onSuccess, onError: (err) => setError(errorMessage(err)) })}
         >
           {t.login.guest}
         </Button>

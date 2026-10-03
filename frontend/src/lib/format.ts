@@ -1,3 +1,5 @@
+import { t } from '@/i18n/he';
+
 const LOCALE = 'he-IL';
 
 export function formatBytes(bytes: number): string {
@@ -25,7 +27,7 @@ export function formatRelative(iso: string): string {
   const relative = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
   const diffMs = new Date(iso).getTime() - Date.now();
   const minutes = Math.round(diffMs / 60000);
-  if (Math.abs(minutes) < 1) return 'ממש עכשיו';
+  if (Math.abs(minutes) < 1) return t.common.justNow;
   if (Math.abs(minutes) < 60) return relative.format(minutes, 'minute');
   const hours = Math.round(minutes / 60);
   if (Math.abs(hours) < 24) return relative.format(hours, 'hour');

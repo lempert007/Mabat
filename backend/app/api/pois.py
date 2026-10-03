@@ -14,6 +14,14 @@ from app.services import pois as poi_service
 router = APIRouter(tags=["pois"])
 
 
+def _identifier_taken() -> HTTPException:
+    return HTTPException(status.HTTP_409_CONFLICT, "המזהה הזה כבר תפוס.")
+
+
+def _category_elsewhere() -> HTTPException:
+    return HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "הקטגוריה הזו שייכת לפרויקט אחר.")
+
+
 async def get_poi_or_404(poi_id: UUID, db: AsyncSession = Depends(get_db)) -> Poi:
     poi = await poi_service.get_poi(db, poi_id)
     if poi is None:
@@ -43,9 +51,11 @@ async def create_poi(
 ) -> PoiOut:
     try:
         poi = await poi_service.create_poi(db, project.id, data, session.user_id)
+    except poi_service.CategoryNotInProject as exc:
+        raise _category_elsewhere() from exc
     except IntegrityError as exc:
         await db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "המזהה הזה כבר תפוס.") from exc
+        raise _identifier_taken() from exc
     return PoiOut.model_validate(poi)
 
 
@@ -78,9 +88,11 @@ async def update_poi(
 ) -> PoiOut:
     try:
         updated = await poi_service.update_poi(db, poi, data, session.user_id)
+    except poi_service.CategoryNotInProject as exc:
+        raise _category_elsewhere() from exc
     except IntegrityError as exc:
         await db.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, "המזהה הזה כבר תפוס.") from exc
+        raise _identifier_taken() from exc
     return PoiOut.model_validate(updated)
 
 

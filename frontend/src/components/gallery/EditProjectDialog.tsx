@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { Dialog } from '@/components/ui/Dialog';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
 import { Segmented } from '@/components/ui/Segmented';
 import { useUpdateProject } from '@/api/projects';
+import { errorMessage } from '@/lib/errorMessage';
+import { toast } from '@/store/toastStore';
 import type { Project, ProjectStage } from '@/types/api';
 import { t } from '@/i18n/he';
 
@@ -18,6 +21,7 @@ export function EditProjectDialog({ project, onClose }: EditProjectDialogProps) 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [stage, setStage] = useState<ProjectStage>('draft');
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
   const update = useUpdateProject(project?.id ?? '');
 
   useEffect(() => {
@@ -28,23 +32,29 @@ export function EditProjectDialog({ project, onClose }: EditProjectDialogProps) 
     }
   }, [project]);
 
+  const dirty =
+    project !== null &&
+    (name.trim() !== project.name || description.trim() !== project.description || stage !== project.stage);
+  const close = () => (dirty ? setConfirmDiscard(true) : onClose());
+  const save = () =>
+    update.mutate(
+      { name: name.trim(), description: description.trim(), stage },
+      { onSuccess: onClose, onError: (error) => toast.error(errorMessage(error)) },
+    );
+
   return (
     <Dialog
       open={Boolean(project)}
-      onClose={onClose}
+      onClose={close}
       title={t.gallery.rename}
       width="sm"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
+          {dirty && <span className="me-auto self-center text-[12px] text-accent-strong">{t.common.unsaved}</span>}
+          <Button variant="ghost" onClick={close}>
             {t.common.cancel}
           </Button>
-          <Button
-            variant="primary"
-            loading={update.isPending}
-            disabled={!name.trim()}
-            onClick={() => update.mutate({ name, description, stage }, { onSuccess: onClose })}
-          >
+          <Button variant="primary" loading={update.isPending} disabled={!dirty || !name.trim()} onClick={save}>
             {t.common.save}
           </Button>
         </>
@@ -68,6 +78,17 @@ export function EditProjectDialog({ project, onClose }: EditProjectDialogProps) 
           />
         </Field>
       </div>
+      <ConfirmDialog
+        open={confirmDiscard}
+        title={t.common.discardTitle}
+        body={t.common.discardBody}
+        confirmLabel={t.common.discardConfirm}
+        onClose={() => setConfirmDiscard(false)}
+        onConfirm={() => {
+          setConfirmDiscard(false);
+          onClose();
+        }}
+      />
     </Dialog>
   );
 }

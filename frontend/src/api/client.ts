@@ -10,18 +10,23 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * The server's own sentence when it wrote one, or an empty string.
+ *
+ * Only a string `detail` is a message meant for people. A list is FastAPI's field validation,
+ * written in English for developers, so it is left for `errorMessage` to phrase instead.
+ */
+function messageFrom(body: unknown): string {
+  const detail = (body as { detail?: unknown } | null)?.detail;
+  return typeof detail === 'string' ? detail : '';
+}
+
 async function readError(response: Response): Promise<string> {
   try {
-    const body = (await response.json()) as { detail?: unknown };
-    if (typeof body.detail === 'string') return body.detail;
-    if (Array.isArray(body.detail)) {
-      const first = body.detail[0] as { msg?: string } | undefined;
-      if (first?.msg) return first.msg;
-    }
+    return messageFrom(await response.json());
   } catch {
-    /* body was not JSON */
+    return ''; // not JSON, such as a proxy's error page
   }
-  return response.statusText || `Request failed (${response.status})`;
 }
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -75,8 +80,7 @@ export function uploadForm<T>(path: string, form: FormData, options: UploadOptio
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.response as T);
       } else {
-        const detail = (xhr.response as { detail?: string } | null)?.detail;
-        reject(new ApiError(xhr.status, detail ?? xhr.statusText));
+        reject(new ApiError(xhr.status, messageFrom(xhr.response)));
       }
     };
     xhr.onerror = () => reject(new ApiError(0, 'network'));

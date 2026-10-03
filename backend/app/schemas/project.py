@@ -2,9 +2,7 @@ from datetime import datetime
 from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import Field
-
-from app.schemas.common import ApiModel, CameraPose, Quaternion
+from app.schemas.common import ApiModel, CameraPose, Quaternion, Trimmed
 
 
 class ProjectSettings(ApiModel):
@@ -39,7 +37,7 @@ class ProjectOut(ApiModel):
 
 
 class ProjectUpdate(ApiModel):
-    name: str | None = Field(default=None, min_length=1, max_length=160)
+    name: Trimmed(160) | None = None
     description: str | None = None
     settings: ProjectSettings | None = None
     stage: ProjectStageLiteral | None = None

@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.router import api_router
 from app.core.config import get_settings
 from app.db.session import SessionLocal
+from app.services import projects as project_service
 from app.services import users as user_service
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -36,6 +37,10 @@ async def lifespan(_: FastAPI):
     settings = get_settings()
     settings.projects_root.mkdir(parents=True, exist_ok=True)
     await _ensure_initial_editor()
+    async with SessionLocal() as db:
+        interrupted = await project_service.fail_interrupted_processing(db)
+    if interrupted:
+        log.warning("Marked %d interrupted conversion(s) as failed", interrupted)
     yield
 
 

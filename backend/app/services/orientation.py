@@ -15,6 +15,9 @@ from app.services.pois import list_pois
 
 IDENTITY = Quaternion(x=0.0, y=0.0, z=0.0, w=1.0)
 
+# Quarter turns composed in floating point land a hair away from exact values.
+_TOLERANCE = 1e-9
+
 
 def multiply(a: Quaternion, b: Quaternion) -> Quaternion:
     """The rotation of `b` followed by the rotation of `a`."""
@@ -45,7 +48,10 @@ def rotate(q: Quaternion, point: dict[str, float]) -> dict[str, float]:
 
 
 def is_identity(q: Quaternion | None) -> bool:
-    return q is None or (q.x == 0.0 and q.y == 0.0 and q.z == 0.0 and abs(q.w) == 1.0)
+    if q is None:
+        return True
+    vector_is_zero = max(abs(q.x), abs(q.y), abs(q.z)) < _TOLERANCE
+    return vector_is_zero and abs(abs(q.w) - 1.0) < _TOLERANCE
 
 
 def same(a: Quaternion | None, b: Quaternion | None) -> bool:
@@ -53,7 +59,7 @@ def same(a: Quaternion | None, b: Quaternion | None) -> bool:
         return True
     if a is None or b is None:
         return False
-    return all(abs(getattr(a, f) - getattr(b, f)) < 1e-9 for f in ("x", "y", "z", "w"))
+    return all(abs(getattr(a, f) - getattr(b, f)) < _TOLERANCE for f in ("x", "y", "z", "w"))
 
 
 async def reorient_points(

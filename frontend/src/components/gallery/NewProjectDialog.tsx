@@ -8,7 +8,6 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { UploadDropzone } from './UploadDropzone';
 import { SketchUpNotice } from './SketchUpNotice';
 import { useCreateProject } from '@/api/projects';
-import { ApiError } from '@/api/client';
 import { errorMessage } from '@/lib/errorMessage';
 import { needsExport } from '@/lib/uploadFormats';
 import { toast } from '@/store/toastStore';
@@ -51,12 +50,7 @@ export function NewProjectDialog({ open, onClose }: NewProjectDialogProps) {
           reset();
           onClose();
         },
-        onError: (error) =>
-          toast.error(
-            error instanceof ApiError && error.status === 413
-              ? t.upload.tooLarge
-              : errorMessage(error),
-          ),
+        onError: (error) => toast.error(errorMessage(error)),
       },
     );
   };

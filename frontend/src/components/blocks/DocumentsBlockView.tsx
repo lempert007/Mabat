@@ -1,6 +1,7 @@
 import { ExternalLink, FileText } from 'lucide-react';
 import { attachmentFileUrl } from '@/api/attachments';
 import type { DocumentsBlock } from '@/types/api';
+import { t } from '@/i18n/he';
 
 export function DocumentsBlockView({ block }: { block: DocumentsBlock }) {
   if (block.items.length === 0) return null;
@@ -17,7 +18,7 @@ export function DocumentsBlockView({ block }: { block: DocumentsBlock }) {
             <span className="h-9 w-9 shrink-0 rounded-lg bg-danger-soft text-danger flex items-center justify-center">
               <FileText size={17} />
             </span>
-            <span className="flex-1 truncate text-sm font-medium">{item.title || 'Document'}</span>
+            <span className="flex-1 truncate text-sm font-medium">{item.title || t.blocks.untitledDocument}</span>
             <ExternalLink size={14} className="text-fg-4 group-hover:text-fg-2" />
           </a>
         </li>

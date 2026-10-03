@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import Field
 
-from app.schemas.common import ApiModel
+from app.schemas.common import ApiModel, Trimmed
 
 
 class LoginRequest(ApiModel):
@@ -25,5 +25,5 @@ class SessionOut(ApiModel):
 
 class CreateUserRequest(ApiModel):
     username: str = Field(min_length=2, max_length=64, pattern=r"^[a-zA-Z0-9_.-]+$")
-    display_name: str = Field(min_length=1, max_length=120)
+    display_name: Trimmed(120)
     password: str = Field(min_length=6, max_length=256)

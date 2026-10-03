@@ -70,7 +70,11 @@ async def upload_attachment(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             "אפשר לצרף תמונות (JPEG, PNG, WebP, GIF) וקובצי PDF.",
         ) from exc
-    except attachment_service.AttachmentTooLarge as exc:
+    except attachment_service.PoiNotInProject as exc:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "הנקודה הזו לא שייכת לפרויקט."
+        ) from exc
+    except storage.UploadTooLarge as exc:
         raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "הקובץ גדול מדי.") from exc
     return to_out(attachment)
 

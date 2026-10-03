@@ -1,7 +1,16 @@
 """Shared schema base with camelCase JSON aliases."""
 
-from pydantic import BaseModel, ConfigDict
+from typing import Annotated
+
+from pydantic import BaseModel, ConfigDict, StringConstraints
 from pydantic.alias_generators import to_camel
+
+
+def Trimmed(max_length: int, min_length: int = 1):  # noqa: N802  (reads as a type)
+    """A string with surrounding whitespace removed before its length is checked."""
+    return Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=min_length, max_length=max_length)
+    ]
 
 
 class ApiModel(BaseModel):

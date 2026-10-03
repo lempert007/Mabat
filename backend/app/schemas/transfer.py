@@ -12,20 +12,23 @@ from uuid import UUID
 from pydantic import Field
 
 from app.schemas.blocks import Block
-from app.schemas.common import ApiModel, CameraPose, Vec3
+from app.schemas.category import COLOR_PATTERN
+from app.schemas.common import ApiModel, CameraPose, Trimmed, Vec3
+from app.schemas.poi import PoiIdentifier, PoiTitle
 
 POINTS_FORMAT = "mabat.points"
 POINTS_VERSION = 1
 
 
+# A points file may have been edited by hand, so it is held to the same limits as the API.
 class ExportedCategory(ApiModel):
-    name: str
-    color: str
+    name: Trimmed(80)
+    color: str = Field(pattern=COLOR_PATTERN)
 
 
 class ExportedPoint(ApiModel):
-    identifier: str
-    title: str
+    identifier: PoiIdentifier
+    title: PoiTitle
     summary: str = ""
     category_name: str | None = None
     position: Vec3

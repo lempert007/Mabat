@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { CameraPose } from '@/types/api';
 
-
 /** Imperative camera API registered by CameraRig so UI outside the canvas can drive the camera. */
 export interface CameraApi {
   flyTo: (pose: CameraPose, smooth?: boolean) => void;
@@ -31,6 +30,10 @@ interface ViewerState {
   pendingEditPoiId: string | null;
   /** Where to return to when a double-click zoom is undone. Null while not zoomed in. */
   zoomReturnPose: CameraPose | null;
+  /** The open point editor holds changes that are not saved yet. */
+  editorDirty: boolean;
+  /** What to do once the editor agrees to drop its changes. Non-null while that is being asked. */
+  pendingDiscard: (() => void) | null;
 
   dismissIntro: () => void;
   showIntro: () => void;
@@ -47,6 +50,11 @@ interface ViewerState {
   setModelReady: (ready: boolean) => void;
   setPendingEdit: (id: string | null) => void;
   setZoomReturnPose: (pose: CameraPose | null) => void;
+  setEditorDirty: (dirty: boolean) => void;
+  /** Runs `action` now, or after the editor confirms losing unsaved changes. */
+  whenEditorClean: (action: () => void) => void;
+  confirmDiscard: () => void;
+  cancelDiscard: () => void;
   reset: () => void;
 }
 
@@ -64,9 +72,11 @@ const initialState = {
   modelReady: false,
   pendingEditPoiId: null,
   zoomReturnPose: null as CameraPose | null,
+  editorDirty: false,
+  pendingDiscard: null as (() => void) | null,
 };
 
-export const useViewerStore = create<ViewerState>((set) => ({
+export const useViewerStore = create<ViewerState>((set, get) => ({
   ...initialState,
   dismissIntro: () => set({ introVisible: false }),
   showIntro: () =>
@@ -90,5 +100,16 @@ export const useViewerStore = create<ViewerState>((set) => ({
   setModelReady: (modelReady) => set({ modelReady }),
   setPendingEdit: (pendingEditPoiId) => set({ pendingEditPoiId }),
   setZoomReturnPose: (zoomReturnPose) => set({ zoomReturnPose }),
+  setEditorDirty: (editorDirty) => set({ editorDirty }),
+  whenEditorClean: (action) => {
+    if (get().editorDirty) set({ pendingDiscard: action });
+    else action();
+  },
+  confirmDiscard: () => {
+    const action = get().pendingDiscard;
+    set({ pendingDiscard: null, editorDirty: false });
+    action?.();
+  },
+  cancelDiscard: () => set({ pendingDiscard: null }),
   reset: () => set({ ...initialState }),
 }));

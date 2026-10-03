@@ -9,10 +9,11 @@ interface DocumentsBlockEditorProps {
   block: DocumentsBlock;
   projectId: string;
   poiId: string;
-  onChange: (b: DocumentsBlock) => void;
+  onUpdate: (update: (b: DocumentsBlock) => DocumentsBlock) => void;
 }
 
-export function DocumentsBlockEditor({ block, projectId, poiId, onChange }: DocumentsBlockEditorProps) {
+export function DocumentsBlockEditor({ block, projectId, poiId, onUpdate }: DocumentsBlockEditorProps) {
+  const setItems = (items: DocumentsBlock['items']) => onUpdate((current) => ({ ...current, items }));
   return (
     <div className="flex flex-col gap-2">
       {block.items.map((item, index) => (
@@ -23,9 +24,9 @@ export function DocumentsBlockEditor({ block, projectId, poiId, onChange }: Docu
           <Input
             placeholder={t.blocks.documentTitle}
             value={item.title}
-            onChange={(e) => onChange({ ...block, items: block.items.map((it, i) => (i === index ? { ...it, title: e.target.value } : it)) })}
+            onChange={(e) => setItems(block.items.map((it, i) => (i === index ? { ...it, title: e.target.value } : it)))}
           />
-          <IconButton label={t.common.remove} size="sm" onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== index) })}>
+          <IconButton label={t.common.remove} size="sm" onClick={() => setItems(block.items.filter((_, i) => i !== index))}>
             <X size={14} />
           </IconButton>
         </div>
@@ -36,8 +37,14 @@ export function DocumentsBlockEditor({ block, projectId, poiId, onChange }: Docu
         accept="application/pdf"
         icon={<FilePlus2 size={14} />}
         label={t.blocks.addDocuments}
-        onUploaded={(attachment) =>
-          onChange({ ...block, items: [...block.items, { attachmentId: attachment.id, title: attachment.filename.replace(/\.pdf$/i, '') }] })
+        onUploaded={(attachments) =>
+          onUpdate((current) => ({
+            ...current,
+            items: [
+              ...current.items,
+              ...attachments.map((a) => ({ attachmentId: a.id, title: a.filename.replace(/\.pdf$/i, '') })),
+            ],
+          }))
         }
       />
     </div>

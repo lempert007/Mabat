@@ -5,9 +5,49 @@ import shutil
 from pathlib import Path
 from uuid import UUID
 
+import aiofiles
+from fastapi import UploadFile
+
 from app.core.config import get_settings
 
 _SAFE_NAME = re.compile(r"[^A-Za-z0-9._-]+")
+_CHUNK_BYTES = 1024 * 1024
+
+
+class UploadTooLarge(Exception):
+    """The upload went past MABAT_MAX_UPLOAD_MB."""
+
+
+async def write_upload(upload: UploadFile, target: Path) -> int:
+    """Stream an upload to `target` and return its size.
+
+    The size limit is enforced while streaming, so an oversized file is never held in full.
+    A refused or interrupted upload leaves nothing behind.
+    """
+    limit = get_settings().max_upload_bytes
+    written = 0
+    try:
+        async with aiofiles.open(target, "wb") as out:
+            while chunk := await upload.read(_CHUNK_BYTES):
+                written += len(chunk)
+                if written > limit:
+                    raise UploadTooLarge()
+                await out.write(chunk)
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
+    return written
+
+
+def remove_files(*relative_paths: str | None) -> None:
+    """Delete stored files by their root-relative paths. Missing or unsafe paths are skipped."""
+    for relative in relative_paths:
+        if not relative:
+            continue
+        try:
+            absolute_from_root(relative).unlink(missing_ok=True)
+        except ValueError:
+            continue
 
 
 def safe_filename(name: str) -> str:

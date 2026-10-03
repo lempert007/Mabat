@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
-import { queryKeys } from './queryKeys';
+import { queryKeys, refreshProjectList } from './queryKeys';
 import type { Poi, PoiCreate, PoiUpdate } from '@/types/api';
 
 export function usePois(projectId: string | undefined) {
@@ -26,7 +26,7 @@ export function useCreatePoi(projectId: string) {
     mutationFn: (data: PoiCreate) => api.post<Poi>(`/projects/${projectId}/pois`, data),
     onSuccess: (poi) => {
       queryClient.setQueryData<Poi[]>(queryKeys.pois(projectId), (list) => replacePoi(list, poi));
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      void refreshProjectList(queryClient);
     },
   });
 }
@@ -49,7 +49,7 @@ export function useDeletePoi(projectId: string) {
       queryClient.setQueryData<Poi[]>(queryKeys.pois(projectId), (list) =>
         list?.filter((poi) => poi.id !== id),
       );
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      void refreshProjectList(queryClient);
     },
   });
 }

@@ -5,6 +5,7 @@ import { ProjectStatusBadge } from './ProjectStatusBadge';
 import { ProjectMenu } from './ProjectMenu';
 import type { Project } from '@/types/api';
 import { formatRelative } from '@/lib/format';
+import { counted } from '@/lib/counted';
 import { t } from '@/i18n/he';
 
 interface ProjectCardProps {
@@ -65,7 +66,7 @@ export function ProjectCard({
           <span className="flex items-center gap-3">
             <span className="inline-flex items-center gap-1">
               <MapPin size={12} />
-              {project.poiCount} {project.poiCount === 1 ? t.gallery.point : t.gallery.points}
+              {counted(project.poiCount, t.gallery.onePoint, t.gallery.manyPoints)}
             </span>
             <span>{formatRelative(project.updatedAt)}</span>
           </span>

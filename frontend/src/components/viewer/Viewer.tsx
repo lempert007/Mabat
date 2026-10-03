@@ -57,6 +57,10 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   const zoomReturnPose = useViewerStore((s) => s.zoomReturnPose);
   const setZoomReturnPose = useViewerStore((s) => s.setZoomReturnPose);
   const reset = useViewerStore((s) => s.reset);
+  const whenEditorClean = useViewerStore((s) => s.whenEditorClean);
+  const pendingDiscard = useViewerStore((s) => s.pendingDiscard);
+  const confirmDiscard = useViewerStore((s) => s.confirmDiscard);
+  const cancelDiscard = useViewerStore((s) => s.cancelDiscard);
 
   const nav = usePoiNavigation(pois, radius);
   const createPoi = useCreatePoi(project.id);
@@ -103,14 +107,16 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         {
           onSuccess: (poi) => {
             setMovingPoi(null);
-            setPendingEdit(poi.id);
-            selectPoi(poi.id);
+            whenEditorClean(() => {
+              setPendingEdit(poi.id);
+              selectPoi(poi.id);
+            });
           },
           onError: (error) => toast.error(errorMessage(error)),
         },
       );
     },
-    [cameraApi, createPoi, setMovingPoi, setPendingEdit, selectPoi],
+    [cameraApi, createPoi, setMovingPoi, setPendingEdit, selectPoi, whenEditorClean],
   );
 
   /** Drops the point being moved wherever the editor clicked next. */
@@ -129,11 +135,12 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   );
 
   const editPoint = useCallback(
-    (poi: Poi) => {
-      selectPoi(poi.id);
-      setPendingEdit(poi.id);
-    },
-    [selectPoi, setPendingEdit],
+    (poi: Poi) =>
+      whenEditorClean(() => {
+        selectPoi(poi.id);
+        setPendingEdit(poi.id);
+      }),
+    [selectPoi, setPendingEdit, whenEditorClean],
   );
 
   const contextMenu = usePointContextMenu({ addPointAt: createPointAt, editPoint });
@@ -183,7 +190,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         onExportPoints={transfer.exportPoints}
         onImportPoints={transfer.openFilePicker}
         exportingPoints={transfer.isExporting}
-        hasPoints={nav.ordered.length > 0}
+        pointCount={nav.ordered.length}
       />
       <PoiList
         projectId={project.id}
@@ -248,6 +255,14 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
             onError: (error) => toast.error(errorMessage(error)),
           })
         }
+      />
+      <ConfirmDialog
+        open={pendingDiscard !== null}
+        title={t.panel.discardTitle}
+        body={t.panel.discardBody}
+        confirmLabel={t.panel.discardConfirm}
+        onClose={cancelDiscard}
+        onConfirm={confirmDiscard}
       />
       {editable && (
         <SceneSettingsPanel

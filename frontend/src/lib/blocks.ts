@@ -1,5 +1,6 @@
 import type { Block, BlockType, ContentBlockType } from '@/types/api';
 import { createId } from './id';
+import { t } from '@/i18n/he';
 
 /** Block types a section can hold. Offered both at the top level and inside a section. */
 export const CONTENT_BLOCK_TYPES: ContentBlockType[] = [
@@ -27,7 +28,7 @@ export function createBlock(type: BlockType): Block {
     case 'specs':
       return { id, type, items: [{ label: '', value: '' }] };
     case 'table':
-      return { id, type, columns: ['Column 1', 'Column 2'], rows: [['', '']] };
+      return { id, type, columns: [`${t.blocks.column} 1`, `${t.blocks.column} 2`], rows: [['', '']] };
     case 'images':
       return { id, type, items: [] };
     case 'documents':

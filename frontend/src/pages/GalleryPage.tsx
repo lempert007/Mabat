@@ -84,7 +84,9 @@ export function GalleryPage({ session }: { session: SessionInfo }) {
             canEdit={canEdit}
             onOpen={(project) => navigate(`/p/${project.id}`)}
             onEdit={setEditing}
-            onReprocess={(project) => reprocess.mutate(project.id)}
+            onReprocess={(project) =>
+              reprocess.mutate(project.id, { onError: (error) => toast.error(errorMessage(error)) })
+            }
             onDelete={setDeleting}
             onToggleStage={(project) =>
               setStage.mutate(

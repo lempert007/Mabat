@@ -1,5 +1,5 @@
 import { Quaternion as ThreeQuaternion, Vector3 } from 'three';
-import type { Quaternion } from '@/types/api';
+import type { Poi, Quaternion, Vec3 } from '@/types/api';
 
 export const IDENTITY: Quaternion = { x: 0, y: 0, z: 0, w: 1 };
 
@@ -30,6 +30,30 @@ export function quarterTurn(
   return { x: next.x, y: next.y, z: next.z, w: next.w };
 }
 
+/** Quarter turns composed in floating point land a hair away from exact values. */
+const TOLERANCE = 1e-9;
+
 export function isUpright(rotation: Quaternion | null): boolean {
-  return !rotation || (rotation.x === 0 && rotation.y === 0 && rotation.z === 0 && Math.abs(rotation.w) === 1);
+  if (!rotation) return true;
+  const { x, y, z, w } = rotation;
+  return Math.max(Math.abs(x), Math.abs(y), Math.abs(z)) < TOLERANCE && Math.abs(Math.abs(w) - 1) < TOLERANCE;
+}
+
+/**
+ * Points are stored in world space, so turning the model has to turn them by the same amount.
+ * This is what the server does when the rotation is saved (`services/orientation.py`); doing it
+ * here too keeps the markers on the model while that save is still on its way.
+ */
+export function turnPoints(pois: Poi[], from: Quaternion | null, to: Quaternion | null): Poi[] {
+  const delta = toThree(to).multiply(toThree(from).invert());
+  const turn = (v: Vec3): Vec3 => {
+    const turned = new Vector3(v.x, v.y, v.z).applyQuaternion(delta);
+    return { x: turned.x, y: turned.y, z: turned.z };
+  };
+  return pois.map((poi) => ({
+    ...poi,
+    position: turn(poi.position),
+    normal: turn(poi.normal),
+    camera: poi.camera && { position: turn(poi.camera.position), target: turn(poi.camera.target) },
+  }));
 }

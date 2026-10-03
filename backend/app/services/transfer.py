@@ -9,7 +9,7 @@ import shutil
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import Attachment, Category, Poi, Project
@@ -21,7 +21,7 @@ from app.schemas.transfer import (
 )
 from app.services import storage
 from app.services.categories import list_categories
-from app.services.pois import list_pois
+from app.services.pois import free_identifier, list_pois, next_sort_order, taken_identifiers
 
 # Block types whose items point at uploaded files.
 ATTACHMENT_BLOCK_TYPES = {"images", "documents"}
@@ -177,12 +177,7 @@ async def _delete_orphan_attachments(db: AsyncSession, project_id: UUID) -> int:
     for attachment in attachments.all():
         if str(attachment.id) in referenced:
             continue
-        for relative in (attachment.path, attachment.thumb_path):
-            if relative:
-                try:
-                    storage.absolute_from_root(relative).unlink(missing_ok=True)
-                except ValueError:
-                    pass
+        storage.remove_files(attachment.path, attachment.thumb_path)
         await db.delete(attachment)
         removed += 1
     return removed
@@ -203,7 +198,10 @@ async def import_points(
 
     # Categories are matched by name so an import lands in the project's existing scheme.
     categories = {category.name: category for category in await list_categories(db, project.id)}
-    next_order = len(categories)
+    highest_order = await db.scalar(
+        select(func.max(Category.sort_order)).where(Category.project_id == project.id)
+    )
+    next_order = 0 if highest_order is None else highest_order + 1
     categories_created = 0
     for exported in document.categories:
         if exported.name in categories:
@@ -220,11 +218,11 @@ async def import_points(
         next_order += 1
     await db.flush()
 
-    taken = {poi.identifier for poi in await list_pois(db, project.id)}
+    taken = await taken_identifiers(db, project.id)
     copied: dict[str, str | None] = {}
     attachments_copied = 0
     attachments_missing = 0
-    sort_order = len(taken)
+    sort_order = await next_sort_order(db, project.id)
 
     for point in document.points:
         blocks = [block.model_dump(by_alias=True) for block in point.blocks]
@@ -232,11 +230,7 @@ async def import_points(
         attachments_copied += fresh
         attachments_missing += missing
 
-        identifier = point.identifier
-        if identifier in taken:
-            number = len(taken) + 1
-            while (identifier := f"P-{number:02d}") in taken:
-                number += 1
+        identifier = point.identifier if point.identifier not in taken else free_identifier(taken)
         taken.add(identifier)
 
         category = categories.get(point.category_name) if point.category_name else None

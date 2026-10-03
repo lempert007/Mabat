@@ -28,7 +28,10 @@ const ENVIRONMENTS: EnvironmentPreset[] = ['studio', 'night', 'dawn'];
 
 export function SceneSettingsPanel({ open, onClose, project, categories }: SceneSettingsPanelProps) {
   const { settings, patch } = useProjectSettings(project);
+  // Separate mutations, so saving the name does not spin the intro-camera button.
   const update = useUpdateProject(project.id);
+  const updateDetails = useUpdateProject(project.id);
+  const onError = (error: unknown) => toast.error(errorMessage(error));
   const setThumbnail = useSetProjectThumbnail(project.id);
   const cameraApi = useViewerStore((s) => s.cameraApi);
 
@@ -36,17 +39,14 @@ export function SceneSettingsPanel({ open, onClose, project, categories }: Scene
     if (!cameraApi) return;
     update.mutate(
       { settings: { ...settings, introCamera: cameraApi.getPose() } },
-      { onSuccess: () => toast.success(t.settings.introSaved), onError: (error) => toast.error(errorMessage(error)) },
+      { onSuccess: () => toast.success(t.settings.introSaved), onError },
     );
   };
 
   const captureCover = async () => {
     const blob = await cameraApi?.capture();
     if (!blob) return;
-    setThumbnail.mutate(blob, {
-      onSuccess: () => toast.success(t.settings.coverSaved),
-      onError: (error) => toast.error(errorMessage(error)),
-    });
+    setThumbnail.mutate(blob, { onSuccess: () => toast.success(t.settings.coverSaved), onError });
   };
 
   return (
@@ -91,7 +91,9 @@ export function SceneSettingsPanel({ open, onClose, project, categories }: Scene
               defaultValue={project.name}
               onBlur={(event) => {
                 const name = event.target.value.trim();
-                if (name && name !== project.name) update.mutate({ name });
+                // A project always has a name, so an emptied field goes back to the saved one.
+                if (!name) event.target.value = project.name;
+                else if (name !== project.name) updateDetails.mutate({ name }, { onError });
               }}
             />
           </Field>
@@ -100,7 +102,9 @@ export function SceneSettingsPanel({ open, onClose, project, categories }: Scene
               rows={2}
               defaultValue={project.description}
               onBlur={(event) => {
-                if (event.target.value !== project.description) update.mutate({ description: event.target.value });
+                if (event.target.value !== project.description) {
+                  updateDetails.mutate({ description: event.target.value }, { onError });
+                }
               }}
             />
           </Field>

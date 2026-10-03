@@ -1,4 +1,4 @@
-"""Image helpers: thumbnails and dimension probing."""
+"""Image helpers: attachment thumbnails and project covers."""
 
 from pathlib import Path
 
@@ -8,24 +8,29 @@ THUMB_SIZE = (640, 640)
 COVER_SIZE = (1280, 800)
 
 
-def probe_dimensions(path: Path) -> tuple[int, int] | None:
+class UnreadableImage(Exception):
+    """The file claims to be an image but Pillow cannot decode it."""
+
+
+def write_thumbnail(source: Path, target: Path) -> tuple[int, int]:
+    """Write a JPEG thumbnail of `source` and return the original's width and height."""
     try:
-        with Image.open(path) as img:
-            return img.width, img.height
-    except OSError:
-        return None
-
-
-def write_thumbnail(source: Path, target: Path, size: tuple[int, int] = THUMB_SIZE) -> None:
-    with Image.open(source) as img:
-        img = ImageOps.exif_transpose(img).convert("RGB")
-        img.thumbnail(size)
-        img.save(target, "JPEG", quality=85, optimize=True)
+        with Image.open(source) as img:
+            size = (img.width, img.height)
+            img = ImageOps.exif_transpose(img).convert("RGB")
+            img.thumbnail(THUMB_SIZE)
+            img.save(target, "JPEG", quality=85, optimize=True)
+    except (OSError, Image.DecompressionBombError) as exc:
+        raise UnreadableImage() from exc
+    return size
 
 
 def write_cover(source: Path, target: Path) -> None:
     """Normalize a viewer capture into a JPEG cover image."""
-    with Image.open(source) as img:
-        img = img.convert("RGB")
-        img.thumbnail(COVER_SIZE)
-        img.save(target, "JPEG", quality=88, optimize=True)
+    try:
+        with Image.open(source) as img:
+            img = img.convert("RGB")
+            img.thumbnail(COVER_SIZE)
+            img.save(target, "JPEG", quality=88, optimize=True)
+    except (OSError, Image.DecompressionBombError) as exc:
+        raise UnreadableImage() from exc

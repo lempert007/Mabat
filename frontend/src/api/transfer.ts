@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, ApiError } from './client';
-import { queryKeys } from './queryKeys';
+import { queryKeys, refreshProjectList } from './queryKeys';
 import type { ImportMode, ImportResult, PointsDocument } from '@/types/api';
 
 export const POINTS_DOCUMENT_FORMAT = 'mabat.points';
@@ -40,7 +40,7 @@ export function useImportPoints(projectId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.pois(projectId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.categories(projectId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.projects });
+      void refreshProjectList(queryClient);
     },
   });
 }

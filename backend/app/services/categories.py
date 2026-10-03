@@ -28,7 +28,7 @@ async def create_category(db: AsyncSession, project_id: UUID, data: CategoryCrea
         project_id=project_id,
         name=data.name.strip(),
         color=data.color.lower(),
-        sort_order=(current_max or 0) + 1,
+        sort_order=0 if current_max is None else current_max + 1,
     )
     db.add(category)
     await db.commit()

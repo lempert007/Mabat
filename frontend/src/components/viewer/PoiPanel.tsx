@@ -21,7 +21,12 @@ export function PoiPanel({ poi, index, total, previous, next, categories, editab
   const selectPoi = useViewerStore((s) => s.selectPoi);
   const pendingEditPoiId = useViewerStore((s) => s.pendingEditPoiId);
   const setPendingEdit = useViewerStore((s) => s.setPendingEdit);
+  const setTourPlaying = useViewerStore((s) => s.setTourPlaying);
   const [editing, setEditing] = useState(false);
+
+  useEffect(() => {
+    if (editing) setTourPlaying(false);
+  }, [editing, setTourPlaying]);
 
   // A point opens straight into the editor when something asked for it, such as a new point or
   // the edit entry in the right-click menu. Moving to another point closes it again.

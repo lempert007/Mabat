@@ -12,7 +12,8 @@ interface AttachmentUploadButtonProps {
   accept: string;
   icon: ReactNode;
   label: string;
-  onUploaded: (attachment: Attachment) => void;
+  /** Called once per batch, with every file that made it, in the order they were picked. */
+  onUploaded: (attachments: Attachment[]) => void;
 }
 
 export function AttachmentUploadButton({ projectId, poiId, accept, icon, label, onUploaded }: AttachmentUploadButtonProps) {
@@ -20,15 +21,16 @@ export function AttachmentUploadButton({ projectId, poiId, accept, icon, label, 
   const upload = useUploadAttachment(projectId);
 
   const onFiles = async (files: FileList | null) => {
-    if (!files) return;
-    for (const file of Array.from(files)) {
-      try {
-        onUploaded(await upload.mutateAsync({ file, poiId }));
-      } catch (error) {
-        toast.error(`${t.blocks.uploadFailed}: ${errorMessage(error)}`);
-      }
-    }
+    const picked = Array.from(files ?? []);
     if (inputRef.current) inputRef.current.value = '';
+    if (picked.length === 0) return;
+    const results = await Promise.allSettled(picked.map((file) => upload.mutateAsync({ file, poiId })));
+    const uploaded: Attachment[] = [];
+    for (const result of results) {
+      if (result.status === 'fulfilled') uploaded.push(result.value);
+      else toast.error(`${t.blocks.uploadFailed}: ${errorMessage(result.reason)}`);
+    }
+    if (uploaded.length > 0) onUploaded(uploaded);
   };
 
   return (

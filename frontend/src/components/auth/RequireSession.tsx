@@ -20,8 +20,8 @@ export function RequireSession({ autoGuest = false, children }: RequireSessionPr
     if (needsGuest && guest.isIdle) guest.mutate();
   }, [needsGuest, guest]);
 
+  if (session.isError || guest.isError) return <Navigate to="/login" replace />;
   if (session.isPending || needsGuest) return <SplashScreen />;
-  if (session.isError) return <Navigate to="/login" replace />;
   if (!session.data) {
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }

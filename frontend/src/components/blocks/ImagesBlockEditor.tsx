@@ -8,10 +8,11 @@ interface ImagesBlockEditorProps {
   block: ImagesBlock;
   projectId: string;
   poiId: string;
-  onChange: (b: ImagesBlock) => void;
+  onUpdate: (update: (b: ImagesBlock) => ImagesBlock) => void;
 }
 
-export function ImagesBlockEditor({ block, projectId, poiId, onChange }: ImagesBlockEditorProps) {
+export function ImagesBlockEditor({ block, projectId, poiId, onUpdate }: ImagesBlockEditorProps) {
+  const setItems = (items: ImagesBlock['items']) => onUpdate((current) => ({ ...current, items }));
   return (
     <div className="flex flex-col gap-2.5">
       {block.items.length > 0 && (
@@ -24,13 +25,13 @@ export function ImagesBlockEditor({ block, projectId, poiId, onChange }: ImagesB
                 placeholder={t.blocks.caption}
                 value={item.caption}
                 onChange={(e) =>
-                  onChange({ ...block, items: block.items.map((it, i) => (i === index ? { ...it, caption: e.target.value } : it)) })
+                  setItems(block.items.map((it, i) => (i === index ? { ...it, caption: e.target.value } : it)))
                 }
               />
               <button
                 type="button"
                 aria-label={t.common.remove}
-                onClick={() => onChange({ ...block, items: block.items.filter((_, i) => i !== index) })}
+                onClick={() => setItems(block.items.filter((_, i) => i !== index))}
                 className="absolute top-1.5 end-1.5 h-6 w-6 rounded-full bg-black/60 text-white/90 hover:bg-danger flex items-center justify-center"
               >
                 <X size={12} />
@@ -45,7 +46,12 @@ export function ImagesBlockEditor({ block, projectId, poiId, onChange }: ImagesB
         accept="image/jpeg,image/png,image/webp,image/gif"
         icon={<ImagePlus size={14} />}
         label={t.blocks.addImages}
-        onUploaded={(attachment) => onChange({ ...block, items: [...block.items, { attachmentId: attachment.id, caption: '' }] })}
+        onUploaded={(attachments) =>
+          onUpdate((current) => ({
+            ...current,
+            items: [...current.items, ...attachments.map((a) => ({ attachmentId: a.id, caption: '' }))],
+          }))
+        }
       />
     </div>
   );

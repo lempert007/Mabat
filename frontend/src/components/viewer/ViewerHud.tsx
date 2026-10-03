@@ -13,6 +13,7 @@ import {
 import { IconButton } from '@/components/ui/IconButton';
 import { useViewerStore } from '@/store/viewerStore';
 import type { Project } from '@/types/api';
+import { counted } from '@/lib/counted';
 import { t } from '@/i18n/he';
 
 interface ViewerHudProps {
@@ -24,7 +25,8 @@ interface ViewerHudProps {
   onExportPoints: () => void;
   onImportPoints: () => void;
   exportingPoints: boolean;
-  hasPoints: boolean;
+  /** Counted from the live list, so a point just added shows up at once. */
+  pointCount: number;
 }
 
 export function ViewerHud({
@@ -36,24 +38,25 @@ export function ViewerHud({
   onExportPoints,
   onImportPoints,
   exportingPoints,
-  hasPoints,
+  pointCount,
 }: ViewerHudProps) {
   const navigate = useNavigate();
   const listOpen = useViewerStore((s) => s.listOpen);
   const toggleList = useViewerStore((s) => s.toggleList);
   const introVisible = useViewerStore((s) => s.introVisible);
   const cameraApi = useViewerStore((s) => s.cameraApi);
+  const whenEditorClean = useViewerStore((s) => s.whenEditorClean);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between p-4">
       <div className="pointer-events-auto flex items-center gap-2 rounded-full glass ps-1.5 pe-4 h-12">
-        <IconButton label={t.common.back} onClick={() => navigate('/')}>
+        <IconButton label={t.common.back} onClick={() => whenEditorClean(() => navigate('/'))}>
           <ArrowLeft size={18} />
         </IconButton>
         <div className="flex flex-col leading-tight">
           <span className="text-[14px] font-semibold tracking-title truncate max-w-[220px] sm:max-w-[360px]">{project.name}</span>
           <span className="text-[11px] text-fg-3">
-            {project.poiCount} {project.poiCount === 1 ? t.gallery.point : t.gallery.points}
+            {counted(pointCount, t.gallery.onePoint, t.gallery.manyPoints)}
           </span>
         </div>
       </div>
@@ -75,7 +78,7 @@ export function ViewerHud({
             <>
               <IconButton
                 label={t.settings.exportPoints}
-                disabled={!hasPoints || exportingPoints}
+                disabled={pointCount === 0 || exportingPoints}
                 onClick={onExportPoints}
               >
                 <FileDown size={18} />
