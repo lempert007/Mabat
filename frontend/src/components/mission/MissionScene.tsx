@@ -4,7 +4,10 @@ import type { Group } from 'three';
 import { MissionClock } from './MissionClock';
 import { MissionDirector } from './MissionDirector';
 import { VehicleModel } from './VehicleModel';
+import { CarrierModel } from './CarrierModel';
 import { VehicleTag } from './VehicleTag';
+import { MissionActors } from './MissionActors';
+import { ActorPaths } from './ActorPaths';
 import { Tether } from './Tether';
 import { FlightPath } from './FlightPath';
 import { DropZone } from './DropZone';
@@ -29,31 +32,22 @@ interface MissionSceneProps {
 /** Matches the interface accent, so the places on the model read as part of the interface. */
 const MARKER_COLOR = '#5b9cff';
 
-const droidAboard = () => (missionLive.frame?.payout ?? 0) < 0.05;
-
 /**
- * The mission drawn over the model: the three vehicles, the tether, the path and the places,
- * and the director at the camera. Every frame puts the vehicles where the plan says they are
- * at this moment; nothing here keeps any motion of its own.
+ * The mission drawn over the model: the carrier and its rope, everything on the ground, the
+ * path and the places, and the director at the camera. Every frame puts each thing where the
+ * plan says it is at this moment; nothing here keeps any motion of its own.
  */
 export function MissionScene({ project, mission, plan }: MissionSceneProps) {
   const carrier = useRef<Group>(null);
-  const droid = useRef<Group>(null);
-  const parcel = useRef<Group>(null);
   const editing = useMissionStore((s) => s.editing);
   const noiseShown = useMissionStore((s) => s.noiseShown);
-  const legs = (2 * plan.halfHeight.droid + 2 * plan.halfHeight.parcel + 0.05 * plan.unitsPerMeter) / plan.size.carrier;
-  const name = (slot: 'carrier' | 'droid') => mission[slot].name || t.mission.vehicles[slot];
+  const { carrier: vehicle } = mission;
 
   useFrame(() => {
     const frame = missionLive.frame;
-    if (!frame || !carrier.current || !droid.current || !parcel.current) return;
+    if (!frame || !carrier.current) return;
     carrier.current.position.copy(frame.carrier);
     carrier.current.rotation.set(frame.pitch, frame.heading, frame.bank, 'YXZ');
-    droid.current.position.copy(frame.droid);
-    droid.current.rotation.set(0, frame.heading, 0);
-    parcel.current.position.copy(frame.parcel);
-    if (frame.parcelState !== 'delivered') parcel.current.rotation.set(0, frame.heading, 0);
   });
 
   return (
@@ -61,23 +55,19 @@ export function MissionScene({ project, mission, plan }: MissionSceneProps) {
       <MissionClock plan={plan} />
       <MissionBackdrop plan={plan} preset={project.settings.environment} />
       <group ref={carrier}>
-        <group scale={plan.size.carrier}>
-          <VehicleModel slot="carrier" project={project} mission={mission} legs={legs} />
+        <group scale={plan.carrier.size}>
+          <VehicleModel
+            projectId={project.id}
+            model={vehicle.model}
+            rotation={vehicle.rotation}
+            measures="carrier"
+            builtIn={<CarrierModel color={vehicle.color} legs={plan.carrier.legs / plan.carrier.size} />}
+          />
         </group>
-        <VehicleTag label={name('carrier')} size={plan.size.carrier} color={mission.carrier.color} />
+        <VehicleTag label={vehicle.name || t.mission.carrier} size={plan.carrier.size} color={vehicle.color} />
       </group>
-      <group ref={droid}>
-        <group scale={plan.size.droid}>
-          <VehicleModel slot="droid" project={project} mission={mission} legs={0} />
-        </group>
-        <VehicleTag label={name('droid')} size={plan.size.droid} color={mission.droid.color} hidden={droidAboard} />
-      </group>
-      <group ref={parcel}>
-        <group scale={plan.size.parcel}>
-          <VehicleModel slot="parcel" project={project} mission={mission} legs={0} />
-        </group>
-      </group>
-      <Tether plan={plan} />
+      <MissionActors projectId={project.id} mission={mission} plan={plan} />
+      <Tether />
       <FlightPath plan={plan} color={MARKER_COLOR} />
       <DropZone plan={plan} color={MARKER_COLOR} />
       <HoverMarker plan={plan} color={MARKER_COLOR} />
@@ -85,6 +75,7 @@ export function MissionScene({ project, mission, plan }: MissionSceneProps) {
       <GroundShadows plan={plan} />
       {noiseShown && <NoiseMap mission={mission} plan={plan} editing={editing} />}
       {editing && <MissionHandles mission={mission} plan={plan} color={MARKER_COLOR} />}
+      {editing && <ActorPaths plan={plan} />}
       <MissionDirector plan={plan} mission={mission} />
     </>
   );

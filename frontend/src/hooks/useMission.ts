@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useMissionPlan } from './useMissionPlan';
 import { useMissionSettings } from './useMissionSettings';
-import { isTracing, useMissionStore } from '@/store/missionStore';
+import { actorTarget, isTracing, noiseTarget, useMissionStore } from '@/store/missionStore';
+import { moveKey, withNextKey } from '@/lib/mission/keys';
 import { useViewerStore } from '@/store/viewerStore';
 import { stageIndexAt } from '@/lib/mission/plan';
 import type { Project, Vec3 } from '@/types/api';
@@ -79,8 +80,28 @@ export function useMission(project: Project) {
         update((current) => ({ waypoints: [...current.waypoints, position] }));
         return;
       }
-      if (typeof target === 'object') {
-        const { zone, vertex } = target;
+      const actor = actorTarget(target);
+      if (actor) {
+        const index = mission?.actors.findIndex((a) => a.id === actor.actor) ?? -1;
+        if (!plan || index === -1) return;
+        if (actor.key !== undefined) store.setPlacing(null);
+        let arrives = 0;
+        update((current) => ({
+          actors: current.actors.map((a, i) => {
+            if (i !== index) return a;
+            const next = actor.key === undefined ? withNextKey(plan, a, index, position) : moveKey(a, actor.key, position);
+            arrives = next.keys[actor.key ?? next.keys.length - 1].at;
+            return next;
+          }),
+        }));
+        // Shows it arriving where the click put it.
+        store.pause();
+        store.seek(plan.onsite + arrives);
+        return;
+      }
+      const noise = noiseTarget(target);
+      if (noise) {
+        const { zone, vertex } = noise;
         if (vertex !== undefined) store.setPlacing(null);
         const moved = (points: Vec3[]) =>
           vertex === undefined ? [...points, position] : points.map((point, i) => (i === vertex ? position : point));
@@ -89,6 +110,7 @@ export function useMission(project: Project) {
         }));
         return;
       }
+      if (typeof target === 'object') return;
       store.setPlacing(null);
       if (typeof target === 'number') {
         update((current) => ({ waypoints: current.waypoints.map((point, i) => (i === target ? position : point)) }));
@@ -99,17 +121,23 @@ export function useMission(project: Project) {
       // The first drop is all a mission needs, so it starts playing straight away.
       if (first) watch();
     },
-    [mission?.drop, update, watch],
+    [mission, plan, update, watch],
   );
 
-  /** Takes back the last waypoint or contour point while they are being added. */
+  /** Takes back the last waypoint, contour point or keyframe while they are being added. */
   const undoPlace = useCallback(() => {
     const target = useMissionStore.getState().placing;
     if (!isTracing(target)) return;
+    const noise = noiseTarget(target);
+    const actor = actorTarget(target);
     if (target === 'waypoint') update((current) => ({ waypoints: current.waypoints.slice(0, -1) }));
-    else if (typeof target === 'object' && target !== null) {
+    else if (noise) {
       update((current) => ({
-        noise: current.noise.map((contour, i) => (i === target.zone ? { ...contour, points: contour.points.slice(0, -1) } : contour)),
+        noise: current.noise.map((contour, i) => (i === noise.zone ? { ...contour, points: contour.points.slice(0, -1) } : contour)),
+      }));
+    } else if (actor) {
+      update((current) => ({
+        actors: current.actors.map((a) => (a.id === actor.actor ? { ...a, keys: a.keys.slice(0, -1) } : a)),
       }));
     }
   }, [update]);

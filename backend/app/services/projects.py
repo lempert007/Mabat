@@ -13,7 +13,7 @@ from app.db.session import SessionLocal
 from app.models import Category, Poi, Project
 from app.models.project import ProjectStage, ProjectStatus
 from app.schemas.project import ProjectSettings
-from app.services import orientation, storage
+from app.services import mission_models, orientation, storage
 from app.services.conversion import (
     SUPPORTED_UPLOAD_FORMATS,
     ConversionError,
@@ -206,6 +206,9 @@ async def update_project(
             db, project.id, previous.model_rotation, settings.model_rotation
         )
         project.settings = settings.model_dump(by_alias=True)
+        # A model the mission no longer draws is removed, once it is old enough to be sure.
+        keep = settings.mission.model_ids() if settings.mission else set()
+        mission_models.collect(project.id, keep)
     if stage is not None:
         project.stage = ProjectStage(stage)
     await db.commit()

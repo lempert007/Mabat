@@ -5,8 +5,8 @@ import { Vector3, type Group } from 'three';
 import { missionLive } from '@/store/missionLive';
 import type { MissionPlan } from '@/lib/mission/types';
 
-/** Shown until the droid is back aboard; after that the place has done its job. */
-const MARKING = new Set(['takeoff', 'cruise', 'approach', 'lower', 'deliver', 'raise']);
+/** Shown until the rope is back in; after that the place has done its job. */
+const MARKING = new Set(['takeoff', 'cruise', 'approach', 'lower', 'onsite', 'raise']);
 
 /**
  * Where the carrier will hold: a ring in the air and a dashed plumb line down to the ground,

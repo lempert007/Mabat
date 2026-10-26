@@ -648,28 +648,14 @@
         }
       }
     },
-    "/api/projects/{project_id}/vehicles/{slot}": {
-      "put": {
+    "/api/projects/{project_id}/mission-models": {
+      "post": {
         "tags": [
-          "vehicles"
+          "mission"
         ],
-        "summary": "Upload Vehicle",
-        "operationId": "upload_vehicle_api_projects__project_id__vehicles__slot__put",
+        "summary": "Upload Model",
+        "operationId": "upload_model_api_projects__project_id__mission_models_post",
         "parameters": [
-          {
-            "name": "slot",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "enum": [
-                "carrier",
-                "droid",
-                "parcel"
-              ],
-              "type": "string",
-              "title": "Slot"
-            }
-          },
           {
             "name": "project_id",
             "in": "path",
@@ -686,18 +672,18 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_vehicle_api_projects__project_id__vehicles__slot__put"
+                "$ref": "#/components/schemas/Body_upload_model_api_projects__project_id__mission_models_post"
               }
             }
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ProjectOut"
+                  "$ref": "#/components/schemas/MissionModelOut"
                 }
               }
             }
@@ -713,26 +699,24 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/projects/{project_id}/mission-models/{model_id}": {
       "get": {
         "tags": [
-          "vehicles"
+          "mission"
         ],
-        "summary": "Get Vehicle",
-        "operationId": "get_vehicle_api_projects__project_id__vehicles__slot__get",
+        "summary": "Get Model",
+        "operationId": "get_model_api_projects__project_id__mission_models__model_id__get",
         "parameters": [
           {
-            "name": "slot",
+            "name": "model_id",
             "in": "path",
             "required": true,
             "schema": {
-              "enum": [
-                "carrier",
-                "droid",
-                "parcel"
-              ],
               "type": "string",
-              "title": "Slot"
+              "pattern": "^[0-9a-f]{32}$",
+              "title": "Model Id"
             }
           },
           {
@@ -752,61 +736,6 @@
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "vehicles"
-        ],
-        "summary": "Remove Vehicle",
-        "operationId": "remove_vehicle_api_projects__project_id__vehicles__slot__delete",
-        "parameters": [
-          {
-            "name": "slot",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "enum": [
-                "carrier",
-                "droid",
-                "parcel"
-              ],
-              "type": "string",
-              "title": "Slot"
-            }
-          },
-          {
-            "name": "project_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Project Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectOut"
-                }
               }
             }
           },
@@ -1535,6 +1464,240 @@
   },
   "components": {
     "schemas": {
+      "Actor-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,40}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Name",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "drone",
+              "rover",
+              "parcel"
+            ],
+            "title": "Kind",
+            "default": "parcel"
+          },
+          "size": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Size",
+            "default": 0.45
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color",
+            "default": "#c9a27a"
+          },
+          "rotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quaternion-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "rides": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rides",
+            "default": "hook"
+          },
+          "mount": {
+            "type": "string",
+            "enum": [
+              "below",
+              "above"
+            ],
+            "title": "Mount",
+            "default": "below"
+          },
+          "leaves": {
+            "type": "number",
+            "maximum": 3600.0,
+            "minimum": 0.0,
+            "title": "Leaves",
+            "default": 0
+          },
+          "staysHooked": {
+            "type": "boolean",
+            "title": "Stayshooked",
+            "default": false
+          },
+          "turns": {
+            "type": "boolean",
+            "title": "Turns",
+            "default": true
+          },
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/Keyframe-Input"
+            },
+            "type": "array",
+            "maxItems": 40,
+            "title": "Keys"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "Actor"
+      },
+      "Actor-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,40}$",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Name",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "drone",
+              "rover",
+              "parcel"
+            ],
+            "title": "Kind",
+            "default": "parcel"
+          },
+          "size": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Size",
+            "default": 0.45
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color",
+            "default": "#c9a27a"
+          },
+          "rotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quaternion-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "rides": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rides",
+            "default": "hook"
+          },
+          "mount": {
+            "type": "string",
+            "enum": [
+              "below",
+              "above"
+            ],
+            "title": "Mount",
+            "default": "below"
+          },
+          "leaves": {
+            "type": "number",
+            "maximum": 3600.0,
+            "minimum": 0.0,
+            "title": "Leaves",
+            "default": 0
+          },
+          "staysHooked": {
+            "type": "boolean",
+            "title": "Stayshooked",
+            "default": false
+          },
+          "turns": {
+            "type": "boolean",
+            "title": "Turns",
+            "default": true
+          },
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/Keyframe-Output"
+            },
+            "type": "array",
+            "maxItems": 40,
+            "title": "Keys"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "size",
+          "color",
+          "rotation",
+          "model",
+          "rides",
+          "mount",
+          "leaves",
+          "staysHooked",
+          "turns",
+          "keys"
+        ],
+        "title": "Actor"
+      },
       "AttachmentOut": {
         "properties": {
           "id": {
@@ -1693,7 +1856,7 @@
         ],
         "title": "Body_upload_attachment_api_projects__project_id__attachments_post"
       },
-      "Body_upload_vehicle_api_projects__project_id__vehicles__slot__put": {
+      "Body_upload_model_api_projects__project_id__mission_models_post": {
         "properties": {
           "file": {
             "type": "string",
@@ -1705,7 +1868,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_upload_vehicle_api_projects__project_id__vehicles__slot__put"
+        "title": "Body_upload_model_api_projects__project_id__mission_models_post"
       },
       "CameraPose": {
         "properties": {
@@ -2389,6 +2552,76 @@
         ],
         "title": "ImportResult"
       },
+      "Keyframe-Input": {
+        "properties": {
+          "at": {
+            "type": "number",
+            "maximum": 3600.0,
+            "minimum": 0.0,
+            "title": "At"
+          },
+          "place": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "lift": {
+            "type": "number",
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Lift",
+            "default": 0
+          },
+          "hold": {
+            "type": "number",
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Hold",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "place"
+        ],
+        "title": "Keyframe",
+        "description": "Where an actor is at one moment: it arrives, waits, and moves on to the next."
+      },
+      "Keyframe-Output": {
+        "properties": {
+          "at": {
+            "type": "number",
+            "maximum": 3600.0,
+            "minimum": 0.0,
+            "title": "At"
+          },
+          "place": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "lift": {
+            "type": "number",
+            "maximum": 500.0,
+            "minimum": 0.0,
+            "title": "Lift",
+            "default": 0
+          },
+          "hold": {
+            "type": "number",
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Hold",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "place",
+          "lift",
+          "hold"
+        ],
+        "title": "Keyframe",
+        "description": "Where an actor is at one moment: it arrives, waits, and moves on to the next."
+      },
       "LinkBlock-Input": {
         "properties": {
           "id": {
@@ -2566,26 +2799,28 @@
           },
           "releaseHeight": {
             "type": "number",
-            "maximum": 50.0,
+            "maximum": 200.0,
             "minimum": 0.0,
             "title": "Releaseheight",
-            "default": 1.5
+            "default": 0
           },
           "dwell": {
             "type": "number",
             "maximum": 120.0,
             "minimum": 0.0,
             "title": "Dwell",
-            "default": 5
+            "default": 3
           },
           "carrier": {
             "$ref": "#/components/schemas/Vehicle-Input"
           },
-          "droid": {
-            "$ref": "#/components/schemas/Vehicle-Input"
-          },
-          "parcel": {
-            "$ref": "#/components/schemas/Vehicle-Input"
+          "actors": {
+            "items": {
+              "$ref": "#/components/schemas/Actor-Input"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Actors"
           },
           "stages": {
             "additionalProperties": {
@@ -2597,7 +2832,7 @@
                 "cruise",
                 "approach",
                 "lower",
-                "deliver",
+                "onsite",
                 "raise",
                 "return",
                 "land"
@@ -2709,26 +2944,28 @@
           },
           "releaseHeight": {
             "type": "number",
-            "maximum": 50.0,
+            "maximum": 200.0,
             "minimum": 0.0,
             "title": "Releaseheight",
-            "default": 1.5
+            "default": 0
           },
           "dwell": {
             "type": "number",
             "maximum": 120.0,
             "minimum": 0.0,
             "title": "Dwell",
-            "default": 5
+            "default": 3
           },
           "carrier": {
             "$ref": "#/components/schemas/Vehicle-Output"
           },
-          "droid": {
-            "$ref": "#/components/schemas/Vehicle-Output"
-          },
-          "parcel": {
-            "$ref": "#/components/schemas/Vehicle-Output"
+          "actors": {
+            "items": {
+              "$ref": "#/components/schemas/Actor-Output"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Actors"
           },
           "stages": {
             "additionalProperties": {
@@ -2740,7 +2977,7 @@
                 "cruise",
                 "approach",
                 "lower",
-                "deliver",
+                "onsite",
                 "raise",
                 "return",
                 "land"
@@ -2774,12 +3011,25 @@
           "releaseHeight",
           "dwell",
           "carrier",
-          "droid",
-          "parcel",
+          "actors",
           "stages",
           "noise"
         ],
         "title": "Mission"
+      },
+      "MissionModelOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "MissionModelOut",
+        "description": "An uploaded model, converted and stored. The mission refers to it by this id."
       },
       "ModelStats": {
         "properties": {
@@ -3568,9 +3818,6 @@
           "settings": {
             "$ref": "#/components/schemas/ProjectSettings-Output"
           },
-          "vehicles": {
-            "$ref": "#/components/schemas/VehicleVersions"
-          },
           "poiCount": {
             "type": "integer",
             "title": "Poicount"
@@ -3613,7 +3860,6 @@
           "hasThumbnail",
           "modelStats",
           "settings",
-          "vehicles",
           "poiCount",
           "createdBy",
           "createdAt",
@@ -4144,7 +4390,7 @@
                   "ground",
                   "top",
                   "side",
-                  "droid"
+                  "close"
                 ]
               },
               {
@@ -4182,7 +4428,7 @@
                   "ground",
                   "top",
                   "side",
-                  "droid"
+                  "close"
                 ]
               },
               {
@@ -4457,13 +4703,26 @@
             "pattern": "^#[0-9a-fA-F]{6}$",
             "title": "Color",
             "default": "#5b9cff"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
           }
         },
         "type": "object",
         "required": [
           "size"
         ],
-        "title": "Vehicle"
+        "title": "Vehicle",
+        "description": "The carrier."
       },
       "Vehicle-Output": {
         "properties": {
@@ -4494,6 +4753,18 @@
             "pattern": "^#[0-9a-fA-F]{6}$",
             "title": "Color",
             "default": "#5b9cff"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
           }
         },
         "type": "object",
@@ -4501,54 +4772,11 @@
           "name",
           "size",
           "rotation",
-          "color"
+          "color",
+          "model"
         ],
-        "title": "Vehicle"
-      },
-      "VehicleVersions": {
-        "properties": {
-          "carrier": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Carrier"
-          },
-          "droid": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Droid"
-          },
-          "parcel": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Parcel"
-          }
-        },
-        "type": "object",
-        "required": [
-          "carrier",
-          "droid",
-          "parcel"
-        ],
-        "title": "VehicleVersions",
-        "description": "The version of each uploaded drone model, or null where the built-in one flies."
+        "title": "Vehicle",
+        "description": "The carrier."
       }
     }
   }

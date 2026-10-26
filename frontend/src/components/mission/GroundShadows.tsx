@@ -7,12 +7,11 @@ import { radialTexture } from '@/lib/radialTexture';
 import type { MissionPlan } from '@/lib/mission/types';
 
 const DOWN = new Vector3(0, -1, 0);
-const CASTERS = ['carrier', 'droid'] as const;
 
 /**
- * A soft shadow on whatever lies under each drone, fading as it climbs. Real shadow maps would
- * cost a second render of the whole model every frame; two raycasts down the BVH cost nothing,
- * and this is what tells the eye how high a drone is above the roofs.
+ * A soft shadow on whatever lies under the carrier and each actor, fading as it climbs. Real
+ * shadow maps would cost a second render of the whole model every frame; a raycast each down the
+ * BVH costs next to nothing, and this is what tells the eye how high something is above the roofs.
  */
 export function GroundShadows({ plan }: { plan: MissionPlan }) {
   const shadows = useRef<(Mesh | null)[]>([]);
@@ -22,19 +21,19 @@ export function GroundShadows({ plan }: { plan: MissionPlan }) {
     return instance;
   }, []);
   const texture = radialTexture('rgba(0,0,0,0.85)');
+  const casters = [plan.carrier, ...plan.cast];
 
   useFrame(() => {
     const frame = missionLive.frame;
     const model = sceneRefs.model;
     if (!frame || !model) return;
-    CASTERS.forEach((slot, i) => {
+    casters.forEach(({ size, half }, i) => {
       const shadow = shadows.current[i];
       if (!shadow) return;
-      const from = slot === 'carrier' ? frame.carrier : frame.droid;
+      const from = i === 0 ? frame.carrier : frame.actors[i - 1].position;
       raycaster.set(from, DOWN);
       const [hit] = raycaster.intersectObject(model, true);
-      const size = plan.size[slot];
-      const height = hit ? hit.distance - plan.halfHeight[slot] : Infinity;
+      const height = hit ? hit.distance - half : Infinity;
       const strength = Math.max(0, 1 - height / (size * 12));
       shadow.visible = Boolean(hit) && strength > 0.01;
       if (!hit || !shadow.visible) return;
@@ -46,8 +45,8 @@ export function GroundShadows({ plan }: { plan: MissionPlan }) {
 
   return (
     <>
-      {CASTERS.map((slot, i) => (
-        <mesh key={slot} ref={(mesh) => void (shadows.current[i] = mesh)} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
+      {casters.map((_, i) => (
+        <mesh key={i} ref={(mesh) => void (shadows.current[i] = mesh)} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
           <planeGeometry args={[1, 1]} />
           <meshBasicMaterial map={texture} transparent depthWrite={false} polygonOffset polygonOffsetFactor={-4} />
         </mesh>

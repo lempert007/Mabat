@@ -16,13 +16,11 @@ from app.schemas.project import (
     ProjectOut,
     ProjectSettings,
     ProjectUpdate,
-    VehicleVersions,
 )
 from app.schemas.transfer import ImportRequest, ImportResult, PointsDocument
 from app.services import projects as project_service
 from app.services import storage
 from app.services import transfer as transfer_service
-from app.services import vehicles as vehicle_service
 from app.services.conversion import NEEDS_EXPORT, SUPPORTED_UPLOAD_FORMATS
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -45,7 +43,6 @@ def to_out(project: Project, poi_count: int) -> ProjectOut:
         has_thumbnail=project.thumbnail_path is not None,
         model_stats=ModelStats.model_validate(project.model_stats),
         settings=ProjectSettings.model_validate(project.settings),
-        vehicles=VehicleVersions(**vehicle_service.versions(project.id)),
         poi_count=poi_count,
         created_by=project.created_by,
         created_at=project.created_at,

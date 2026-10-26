@@ -30,12 +30,10 @@ class ModelStats(ApiModel):
     extents: Point3 | None = None
 
 
-class VehicleVersions(ApiModel):
-    """The version of each uploaded drone model, or null where the built-in one flies."""
+class MissionModelOut(ApiModel):
+    """An uploaded model, converted and stored. The mission refers to it by this id."""
 
-    carrier: str | None
-    droid: str | None
-    parcel: str | None
+    id: str
 
 
 class ProjectOut(ApiModel):
@@ -52,7 +50,6 @@ class ProjectOut(ApiModel):
     has_thumbnail: bool
     model_stats: ModelStats
     settings: ProjectSettings
-    vehicles: VehicleVersions
     poi_count: int
     created_by: UUID | None
     created_at: datetime

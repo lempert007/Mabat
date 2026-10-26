@@ -77,10 +77,6 @@ def thumbnail_path(project_id: UUID) -> Path:
     return project_dir(project_id) / "thumbnail.jpg"
 
 
-def vehicles_dir(project_id: UUID) -> Path:
-    return project_dir(project_id) / "vehicles"
-
-
 def ensure_project_dirs(project_id: UUID) -> None:
     source_dir(project_id).mkdir(parents=True, exist_ok=True)
     attachments_dir(project_id).mkdir(parents=True, exist_ok=True)

@@ -7,15 +7,13 @@ import { useMissionStore } from '@/store/missionStore';
 import { sceneRefs } from '@/store/sceneRefs';
 import { DEFAULT_SHOTS } from '@/lib/mission/defaults';
 import { shotPose, type ShotPose } from '@/lib/mission/shots';
-import type { MissionPlan } from '@/lib/mission/types';
-import type { CameraShot, Mission } from '@/types/api';
+import type { MissionFrame, MissionPlan } from '@/lib/mission/types';
+import type { Mission } from '@/types/api';
 
 /** Moving from one shot to the next takes this long, s. */
 const BLEND = 1.8;
 /** Taking up the action when following starts or switches drone, s. */
 const FOLLOW_BLEND = 0.8;
-/** While the droid is off the carrier, it is the one to watch. */
-const DROID_STAGES = new Set(['lower', 'deliver', 'raise']);
 
 const ease = (value: number) => MathUtils.smootherstep(value, 0, 1);
 
@@ -40,19 +38,19 @@ export function MissionDirector({ plan, mission }: { plan: MissionPlan; mission:
     instance.firstHitOnly = true;
     return instance;
   }, []);
-  const shot = useRef<{ name: CameraShot | null; from: ShotPose; startedAt: number; clear: number }>({
+  const shot = useRef<{ name: string | null; from: ShotPose; startedAt: number; clear: number }>({
     name: null,
     from: { eye: new Vector3(), target: new Vector3() },
     startedAt: 0,
     clear: Infinity,
   });
-  const follow = useRef<{ subject: string | null; from: Vector3; startedAt: number }>({
+  const follow = useRef<{ subject: MissionFrame['subject'] | null; from: Vector3; startedAt: number }>({
     subject: null,
     from: new Vector3(),
     startedAt: 0,
   });
 
-  // A mission's best views look up at a drone from the ground and come in close to the droid,
+  // A mission's best views look up at a drone from the ground and come in close to the actors,
   // which the limits that suit exploring the model would not allow.
   useEffect(() => {
     if (!controls) return;
@@ -101,8 +99,7 @@ export function MissionDirector({ plan, mission }: { plan: MissionPlan; mission:
     if (mode !== 'follow') follow.current.subject = null;
 
     if (mode === 'follow') {
-      const subject = DROID_STAGES.has(kind) ? 'droid' : 'carrier';
-      const anchor = subject === 'droid' ? frame.droid : frame.carrier;
+      const { subject, focus: anchor } = frame;
       const state = follow.current;
       if (state.subject !== subject) {
         controls.getTarget(state.from);
@@ -120,11 +117,13 @@ export function MissionDirector({ plan, mission }: { plan: MissionPlan; mission:
     if (mode !== 'cinematic') return;
 
     const name = mission.stages[kind]?.shot ?? DEFAULT_SHOTS[kind];
+    // A new shot, or the same one on someone else, blends from wherever the camera was.
+    const key = `${name}:${frame.subject}`;
     const state = shot.current;
-    if (state.name !== name) {
+    if (state.name !== key) {
       controls.getPosition(state.from.eye);
       controls.getTarget(state.from.target);
-      state.name = name;
+      state.name = key;
       state.startedAt = now;
       state.clear = Infinity;
     }

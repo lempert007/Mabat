@@ -24,6 +24,14 @@ export function formatClock(seconds: number): string {
   return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
 }
 
+/** A keyframe's moment, to the tenth of a second it is kept to: 0:12, 0:12.4. */
+export function formatCue(seconds: number): string {
+  const tenths = Math.round(Math.max(0, seconds) * 10);
+  const whole = Math.floor(tenths / 10);
+  const clock = `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+  return tenths % 10 ? `${clock}.${tenths % 10}` : clock;
+}
+
 /** A measurement with as many decimals as it needs to read well, and no more. */
 export function formatMeasure(value: number, decimals = 0): string {
   return new Intl.NumberFormat(LOCALE, { maximumFractionDigits: decimals, minimumFractionDigits: decimals }).format(value);

@@ -2,10 +2,12 @@ import { motion } from 'framer-motion';
 import { AudioLines, Clapperboard, Crosshair, Move3d, Pause, Play, Presentation, Repeat, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { StageTimeline } from './StageTimeline';
+import { SceneTimeline } from './SceneTimeline';
 import { PLAYBACK_RATES, useMissionStore, type CameraMode } from '@/store/missionStore';
 import { formatClock } from '@/lib/format';
 import { isClosed } from '@/lib/mission/noise';
 import { cn } from '@/lib/cn';
+import type { MissionChange } from '@/hooks/useMissionSettings';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission } from '@/types/api';
 import { t } from '@/i18n/he';
@@ -15,6 +17,8 @@ interface MissionPlayerProps {
   mission: Mission;
   current: number;
   onStep: (delta: 1 | -1) => void;
+  /** Editing: the ground's timeline opens above the stages while its tab is. */
+  update?: (change: MissionChange) => void;
 }
 
 const CAMERAS: { mode: CameraMode; icon: typeof Clapperboard }[] = [
@@ -28,7 +32,7 @@ const CAMERAS: { mode: CameraMode; icon: typeof Clapperboard }[] = [
  * the show runs: its speed, whether it waits at the end of each stage for the presenter, and
  * who holds the camera.
  */
-export function MissionPlayer({ plan, mission, current, onStep }: MissionPlayerProps) {
+export function MissionPlayer({ plan, mission, current, onStep, update }: MissionPlayerProps) {
   const time = useMissionStore((s) => s.time);
   const playing = useMissionStore((s) => s.playing);
   const rate = useMissionStore((s) => s.rate);
@@ -36,6 +40,8 @@ export function MissionPlayer({ plan, mission, current, onStep }: MissionPlayerP
   const stepwise = useMissionStore((s) => s.stepwise);
   const loopStage = useMissionStore((s) => s.loopStage);
   const noiseShown = useMissionStore((s) => s.noiseShown);
+  const editing = useMissionStore((s) => s.editing);
+  const sceneOpen = useMissionStore((s) => s.editing && s.tab === 'scene');
   const { play, pause, setRate, setCamera, setStepwise, setLoopStage, setNoiseShown } = useMissionStore.getState();
   const hasNoise = mission.noise.some(isClosed);
   const finished = time >= plan.duration - 1e-3;
@@ -43,12 +49,18 @@ export function MissionPlayer({ plan, mission, current, onStep }: MissionPlayerP
   return (
     <motion.div
       dir="ltr"
-      className="pointer-events-auto flex w-[min(980px,calc(100vw-2rem))] flex-col gap-2 rounded-2xl glass px-4 pb-3 pt-2.5"
+      className={cn(
+        'pointer-events-auto flex w-[min(980px,calc(100vw-2rem))] flex-col gap-2 rounded-2xl glass px-4 pb-3 pt-2.5',
+        // The mission panel stands at the end of the screen, which this left-to-right player
+        // calls its start; while it is open the player moves over to keep clear of it.
+        editing && 'lg:ms-[25rem] lg:w-[min(980px,calc(100vw-27rem))]',
+      )}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 16 }}
       transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
     >
+      {sceneOpen && update && <SceneTimeline plan={plan} mission={mission} update={update} />}
       <StageTimeline plan={plan} mission={mission} current={current} />
 
       <div className="flex items-center gap-1">

@@ -10,19 +10,20 @@ import {
   type MeshBasicMaterial,
 } from 'three';
 import { missionLive } from '@/store/missionLive';
+import { useMissionStore } from '@/store/missionStore';
 import type { MissionPlan } from '@/lib/mission/types';
 
-const DELIVERED = new Color('#34c76f');
+const SET_DOWN = new Color('#34c76f');
 const PULSES = 2;
 const FLAT: [number, number, number] = [-Math.PI / 2, 0, 0];
 const OVERLAY = { transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, toneMapped: false };
 
-/** The drop shows its beam until the droid is on its way down. */
+/** The drop shows its beam until the rope is on its way down. */
 const BEAMING = new Set(['takeoff', 'cruise', 'approach']);
 
 /**
  * The landing target on the ground: a pad with pulsing rings and a column of light up to where
- * the carrier will hold. It turns green the moment the parcel is down.
+ * the carrier will hold. It turns green the moment the load is down.
  */
 export function DropZone({ plan, color }: { plan: MissionPlan; color: string }) {
   const u = plan.unitsPerMeter;
@@ -50,7 +51,7 @@ export function DropZone({ plan, color }: { plan: MissionPlan; color: string }) 
   useFrame(({ clock }, delta) => {
     const frame = missionLive.frame;
     if (!frame) return;
-    const color = frame.parcelState === 'delivered' ? DELIVERED : accent;
+    const color = useMissionStore.getState().time >= plan.onsite ? SET_DOWN : accent;
     for (const material of tinted.current) material?.color.copy(color);
     pulses.current.forEach((pulse, i) => {
       if (!pulse) return;

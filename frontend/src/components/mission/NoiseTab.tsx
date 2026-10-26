@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Switch';
 import { PanelSection } from '@/components/viewer/PanelSection';
 import { NoiseZoneRow } from './NoiseZoneRow';
-import { useMissionStore } from '@/store/missionStore';
+import { noiseTarget, useMissionStore } from '@/store/missionStore';
 import { useViewerStore } from '@/store/viewerStore';
 import { extentOf, zoneColors } from '@/lib/mission/noise';
 import { aerialPose } from '@/lib/vec';
@@ -30,7 +30,8 @@ export function NoiseTab({ mission, update }: NoiseTabProps) {
   const shown = useMissionStore((s) => s.noiseShown);
   const setShown = useMissionStore((s) => s.setNoiseShown);
   const colors = zoneColors(mission.noise);
-  const drawingZone = typeof placing === 'object' && placing !== null && placing.vertex === undefined ? placing.zone : null;
+  const target = noiseTarget(placing);
+  const drawingZone = target && target.vertex === undefined ? target.zone : null;
 
   const change = (index: number, zone: Partial<NoiseZone>) =>
     update((current) => ({ noise: current.noise.map((z, i) => (i === index ? { ...z, ...zone } : z)) }));
@@ -47,7 +48,7 @@ export function NoiseTab({ mission, update }: NoiseTabProps) {
   };
 
   const remove = (index: number) => {
-    if (placing !== null && typeof placing === 'object') setPlacing(null);
+    if (target) setPlacing(null);
     update((current) => ({ noise: current.noise.filter((__, i) => i !== index) }));
   };
 

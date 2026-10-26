@@ -2,7 +2,7 @@ import type { ThreeEvent } from '@react-three/fiber';
 import { Line } from '@react-three/drei';
 import { Vector3 } from 'three';
 import { NoiseContour } from './NoiseContour';
-import { isTracing, useMissionStore } from '@/store/missionStore';
+import { isTracing, noiseTarget, useMissionStore } from '@/store/missionStore';
 import { isClosed, zoneColors, zoneName } from '@/lib/mission/noise';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission, NoiseZone } from '@/types/api';
@@ -42,8 +42,9 @@ interface ContourPointsProps {
  */
 function ContourPoints({ zone, index, color, unitsPerMeter: u }: ContourPointsProps) {
   const placing = useMissionStore((s) => s.placing);
-  const moving = typeof placing === 'object' && placing?.zone === index ? placing.vertex : undefined;
-  const tracingThis = isTracing(placing) && typeof placing === 'object' && placing?.zone === index;
+  const target = noiseTarget(placing);
+  const moving = target?.zone === index ? target.vertex : undefined;
+  const tracingThis = isTracing(placing) && target?.zone === index;
   const path = zone.points.map((p) => new Vector3(p.x, p.y + 0.3 * u, p.z));
 
   const pick = (vertex: number) => (event: ThreeEvent<MouseEvent>) => {

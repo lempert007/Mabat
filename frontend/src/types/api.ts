@@ -33,13 +33,19 @@ export type EnvironmentPreset = ProjectSettings['environment'];
 /* ---------- The delivery mission ---------- */
 
 export type Mission = Schemas['Mission-Output'];
+/** The carrier. */
 export type Vehicle = Schemas['Vehicle-Output'];
+/** Something on the ground: what the rope brings down, and whatever it brings with it. */
+export type Actor = Schemas['Actor-Output'];
+export type ActorKind = Actor['kind'];
+/** Where an actor is at one moment: it arrives, waits, and moves on. */
+export type Keyframe = Schemas['Keyframe-Output'];
 export type StageText = Schemas['StageText-Output'];
 export type NoiseZone = Schemas['NoiseZone-Output'];
 export type CameraShot = NonNullable<StageText['shot']>;
-export type VehicleSlot = keyof Project['vehicles'];
+export type MissionModel = Schemas['MissionModelOut'];
 /** The keys of `Mission.stages`. OpenAPI states them, but the generator types the map by string. */
-export type StageKind = 'takeoff' | 'cruise' | 'approach' | 'lower' | 'deliver' | 'raise' | 'return' | 'land';
+export type StageKind = 'takeoff' | 'cruise' | 'approach' | 'lower' | 'onsite' | 'raise' | 'return' | 'land';
 
 /* ---------- Points and their content ---------- */
 

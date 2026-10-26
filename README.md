@@ -4,9 +4,11 @@ A dark, board-room-ready web app for presenting a 3D model of a structure with r
 Editors upload a model, walk through it and pin points with content. Guests explore, open points and
 follow share links. Runs entirely offline.
 
-Over the same model it plays a **live delivery mission**: a carrier drone flies the route, hovers,
-lowers a delivery droid on a tether to the drop, sets the parcel down and reels it back in, told as
-a narrated show in stages with cinematic cameras and live telemetry.
+Over the same model it plays a **live delivery mission**: a carrier drone flies the route, hovers and
+lowers its load on a rope to the drop. What happens on the ground is up to the editor: upload any
+models, say what rides what, and click the places each one goes; a rover drives off with a parcel
+on its back, a small drone flies away and lands. It plays as a narrated show in stages with
+cinematic cameras and live telemetry.
 
 See [DESIGN.md](DESIGN.md) for the architecture and [CLAUDE.md](CLAUDE.md) for conventions.
 
@@ -124,15 +126,15 @@ Upload the result as a project. Roughly 200,000 triangles and 5 MB.
 
 ## Delivery missions
 
-Open a project, press **עריכת המשימה** in the toolbar and choose where the parcel lands by clicking the
-model. That one click is a whole mission: it starts playing straight away, with the carrier arriving
+Open a project, press **עריכת המשימה** in the toolbar and choose where the rope sets its load down by
+clicking the model. That one click is a whole mission: it starts playing straight away, with the carrier arriving
 from beyond the model. Everything else is optional and changes the scene as you move it:
 
 | Tab | What it sets |
 | --- | --- |
 | מסלול | The drop, a hover point if the carrier should hold off to one side, a hub to take off from and land on, waypoints in order, and the model's real width if its units are not metres. Each place has a button that flies the camera to it |
-| טיסה | Cruise altitude and speed, climb rate, hover altitude, tether length (with a check that it reaches), winch speed, release height, time at the drop |
-| כלים | The carrier, the droid and the parcel: their names in the show, real sizes, colours, and your own models (any format the uploads accept; turn them nose first if they fly sideways) |
+| טיסה | The carrier (name, size, colour or your own model), cruise altitude and speed, climb rate, hover altitude, rope length (with a check that it reaches), winch speed, release height, and how long it waits at the end |
+| בשטח | Everything on the ground. Add a drone, a rover or a parcel, give it your own model if you like, and say what it starts on: the rope, another actor (on top or hanging underneath), or standing on the model. Then click its stops on the model, one after another; each gets a time at that kind's own pace, which you can change. A timeline docks above the player with one lane per actor: drag a stop to retime it and it snaps to other actors' stops, drag the end of a wait to lengthen it |
 | שלבים | Each stage's title, caption and camera, with a button to watch just that stage |
 | רעש | Noise contours from your acoustic study, traced on the ground point by point. In the show, sound rings run out from the drone to each contour's edge, which glows; outside every contour it is quiet. Hidden until you turn it on, from the player or this tab |
 
@@ -147,7 +149,8 @@ the show at ½×, 1×, 2× or 4×.
 | `Space` | Play / pause |
 | `→` `←` | Next / previous stage (presenting: plays the stage waiting to start) |
 | `Esc` | Stop placing on the model |
-| `Enter` / `Backspace` | While adding waypoints or tracing a noise contour: finish / take back the last point |
+| `Enter` / `Backspace` | While adding waypoints, stops or a noise contour: finish / take back the last point |
+| `→` `←` `Delete` | On a stop focused in the timeline: a tenth of a second later or earlier (`Shift`: a second), remove it |
 
 ### The neighbourhood demo
 

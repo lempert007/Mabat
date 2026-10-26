@@ -12,7 +12,14 @@ import type { Project } from '@/types/api';
 export function useMissionPlan(project: Project): MissionPlan | null {
   const mission = project.settings.mission;
   const heights = useMissionStore((s) => s.heights);
-  const flight = mission && JSON.stringify({ ...mission, stages: null, carrier: { ...mission.carrier, name: '' }, droid: { ...mission.droid, name: '' } });
+  const flight =
+    mission &&
+    JSON.stringify({
+      ...mission,
+      stages: null,
+      carrier: { ...mission.carrier, name: '' },
+      actors: mission.actors.map((actor) => ({ ...actor, name: '' })),
+    });
   const { modelStats, settings } = project;
 
   return useMemo(

@@ -5,10 +5,10 @@ surroundings to a board of directors. Editors upload a model, walk through it, a
 points of interest (POIs) with rich content. Guests explore the model, open any point and
 read everything the editors prepared. Share links open a project at a specific point.
 
-A project can also carry a **delivery mission**: a carrier drone flies in over the model,
-hovers, lowers a droid on a tether, the droid sets a parcel down and is reeled back in. Editors
-place the drop with one click and tune everything else; viewers watch it as a narrated show in
-stages (section 12).
+A project can also carry a **delivery mission**: a carrier drone flies in over the model, hovers
+and lowers its load on a rope. What happens on the ground is the editor's: actors with models of
+their own, riding each other, moving through keyframes. Editors place the drop with one click and
+build the rest; viewers watch it as a narrated show in stages (section 12).
 
 ## 1. Constraints
 
@@ -87,7 +87,7 @@ STORAGE_ROOT/
     thumbnail.jpg                  gallery cover, captured from the viewer
     attachments/<attachment-id>.<ext>
     attachments/<attachment-id>.thumb.jpg   (images only)
-    vehicles/carrier.glb | droid.glb | parcel.glb   uploaded drone models, each optional
+    mission-models/<model-id>.glb  the mission's uploaded models, one file per upload
 ```
 
 ## 5. Model pipeline
@@ -144,9 +144,8 @@ GET    /attachments/{id}/file
 GET    /attachments/{id}/thumb
 DELETE /attachments/{id}                (editor)
 
-PUT    /projects/{id}/vehicles/{slot}   (editor, multipart) slot: carrier | droid | parcel
-GET    /projects/{id}/vehicles/{slot}?v=<version>            → GLB
-DELETE /projects/{id}/vehicles/{slot}   (editor)             back to the built-in model
+POST   /projects/{id}/mission-models        (editor, multipart) → {id}
+GET    /projects/{id}/mission-models/{id}                   → GLB, immutable
 ```
 
 ## 7. Frontend
@@ -264,40 +263,75 @@ Defaults live on the server as well as in `newMission()`, so a mission saved bef
 existed reads back with that field's default. `defaults.test.ts` reads them from the OpenAPI
 schema and fails if the two disagree.
 
-Drone models are files, not rows: `vehicles/<slot>.glb`, converted by the same pipeline as a
-project's model but while the request waits, since they are small. The file's timestamp is the
-version in `ProjectOut.vehicles`, which keeps a replaced model out of the cache. A slot with no
-file flies the built-in model drawn in code.
+The carrier and every actor can draw an uploaded model. Each upload is converted by the same
+pipeline as a project's model, while the request waits since they are small, and stored under a
+fresh id (`mission-models/<id>.glb`). The mission refers to the id, so a file never changes behind
+its URL and is cached for good; replacing a model is uploading another. Saving the settings sweeps
+up files the mission no longer refers to, once they are an hour old, so an upload whose reference
+has not been saved yet is never lost. Without a model, the built-in one for its kind is drawn in
+code: the carrier, a drone, a six-wheeled rover, a parcel.
 
 ### The flight is a pure function of time
 
 `buildPlan(mission, site, heights)` turns a mission into stages and a `frameAt(time)` that says
-where everything is: carrier, heading, bank, pitch, rotor power, landing legs, winch, droid,
-payout, parcel. Playing, scrubbing, jumping to a stage, looping a stage and stopping at stage
+where everything is: carrier, heading, bank, pitch, rotor power, landing legs, winch, the rope's
+end, and every actor, plus what the camera should watch. Playing, scrubbing, jumping to a stage, looping a stage and stopping at stage
 ends are all just asking for another moment, so nothing drifts and nothing needs resetting.
 The trail is read from the plan's own samples, not recorded, so it is right after a jump.
 
 Every motion is a rest-to-rest trapezoidal profile (`profile.ts`), so the speeds the telemetry
 reads off the frames are the speeds being flown. Banking comes from curvature and speed
-(`atan(v²κ/g)`), pitch from acceleration, and the droid swings with the period of a pendulum
-the length of the tether. `plan.test.ts` checks that nothing jumps across any stage boundary.
+(`atan(v²κ/g)`), pitch from acceleration, and the load swings with the period of a pendulum
+the length of the rope. `plan.test.ts` checks that nothing jumps across any stage boundary.
 
 The flight lives in `lib/mission/`: `types.ts` the shapes, `route.ts` the curve and headings,
-`plan.ts` the stages, `shots.ts` the cameras, `telemetry.ts` the readout. The viewer reaches all
+`plan.ts` the stages, `cast.ts` the actors, `track.ts` an actor's motion, `keys.ts` editing
+keyframes, `shots.ts` the cameras, `telemetry.ts` the readout. The viewer reaches all
 of it through one hook, `useMission`.
 
 There is deliberately no wind. It added two settings and a weather section to every mission
 for a sway few viewers noticed, and editors were left guessing a direction in degrees.
 
-Stages: takeoff, cruise, approach, lower, deliver, raise, return, land. Takeoff and land exist
+Stages: takeoff, cruise, approach, lower, onsite, raise, return, land. Takeoff and land exist
 only with a hub; a stage shorter than 50 ms is dropped.
+
+### On the ground
+
+The fixed part is the flight: the carrier comes to the drop and pays out its rope until the load's
+foot is at the release height (zero sets it down). Everything else is a list of **actors**
+(`mission.actors`, at most eight). Each has a kind (drone, rover or parcel), an optional model of
+its own, a size, and what it starts on:
+
+- **the rope** (one actor at most). It is let go as it touches down, which is the moment keyframe
+  time counts from, and the rope reels straight back in. Or it **stays hooked** and goes back up
+  with the rope once the ground is done, which is the classic droid that lowers a parcel.
+- **another actor**, sitting on top or hanging underneath, until the moment it gets off. A rider
+  with no keyframes never gets off, so a parcel on a rover simply goes where the rover goes.
+- **the model**, standing at its first keyframe from the start of the mission.
+
+A keyframe is a place clicked on the model, a height above it, the moment it is reached (seconds
+after touchdown) and a wait. This is simpler than general keyframing on purpose: there is no
+rotation to key and no curve to edit. `track.ts` draws a centripetal Catmull-Rom path through the
+places and drives the distance along it with a monotone cubic through each keyframe's moment, so
+an actor arrives exactly on time, never backs up, starts and stops at rest, stands still through
+a wait, and faces the way it is going, turning in from where it started. Rover wheels turn by the
+distance covered and an uploaded model's own animation runs on the mission clock, so both scrub.
+
+The carrier stays until the last keyframe is done plus `dwell`. While the ground plays, the camera
+watches whatever set off most recently and is still moving, a moment before it moves, and stays on
+whatever moved last; the director blends to each new subject as it does to a new shot.
+
+New keyframes are timed for the editor: from where the actor last was, at its kind's own pace
+(a drone at 4 m/s and 6 m up, a rover at 1.4 m/s), and a rider's first one after its ride has
+stopped. So tracing a route by clicking gives a believable motion before any number is touched,
+and the panel says the pace of each leg and warns when one is implausibly fast.
 
 ### Drawing it
 
 - `MissionClock` advances the clock and publishes the frame in `missionLive` at `useFrame`
   priority −1, so it runs before everything else and every object draws the same moment.
   Negative priorities leave rendering to r3f; positive ones would take it over.
-- Nothing animated reads React state. Vehicles, tether, trail, shadows and the director read
+- Nothing animated reads React state. Vehicles, actors, rope, trail, shadows and the director read
   `missionLive.frame` in their own frame callbacks; the DOM panels re-render with `time`.
 - Lines that change every frame are rewritten in place (`setLinePoints`). `setPositions`
   allocates new GPU buffers on every call and the old ones are never freed.
@@ -327,7 +361,16 @@ reduced resolution.
 The mission panel floats like the scene settings and saves as it goes. Places are set by
 clicking the model; waypoints keep coming until Escape. Clicking the first drop creates the
 mission and starts playing it at once. Every place in the route tab has a button that flies the
-camera down onto it. The flight tab says whether the tether reaches the drop.
+camera down onto it. The flight tab says whether the rope reaches the drop.
+
+The ground tab lists the actors. Adding one puts it on whatever came down the rope (on top of
+something that drives, under something that flies) and starts tracing its stops at once, since
+where it goes is the point of adding it. With the tab open, a timeline docks above the player: a
+lane per actor, a bar while it rides, a line per move, a block per wait, a diamond per keyframe.
+Dragging a diamond retimes it and seeks the scene to it, and it snaps to any other actor's moment
+within a few pixels, which is how two things are made to happen together. In the scene each
+actor's path is drawn in its lane's colour with a handle on every keyframe; clicking one picks it
+up and the next click puts it down.
 Stage titles and captions fall back to written defaults, and each stage can pick its shot.
 
 ### Noise
@@ -352,7 +395,6 @@ handle: click it, then click where it goes.
 
 ## 13. Out of scope for v1 (planned)
 
-Several missions per project (one per address), a mission timeline exported to video, and
-drone animations driven by the stage rather than looped.
+Several missions per project (one per address), and a mission timeline exported to video.
 
 Clipping planes, measurements, multiple models per project, PDF export of points, per-presentation access codes, dragging a marker across the model to reposition it.

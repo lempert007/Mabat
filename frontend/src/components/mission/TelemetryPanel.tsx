@@ -19,7 +19,7 @@ export function TelemetryPanel({ plan, mission }: { plan: MissionPlan; mission: 
   const time = useMissionStore((s) => s.time);
   const reading = telemetryAt(plan, time);
   const tether = Math.min(reading.payout / mission.tetherLength, 1);
-  const delivered = time >= plan.deliveredAt;
+  const delivered = time >= plan.onsite;
   const noiseShown = useMissionStore((s) => s.noiseShown);
 
   return (
@@ -48,12 +48,12 @@ export function TelemetryPanel({ plan, mission }: { plan: MissionPlan; mission: 
               <CircleCheck size={13} />
               {labels.deliveredAt}
             </span>
-            <bdi className="tabular-nums text-fg-2">{formatClock(plan.deliveredAt)}</bdi>
+            <bdi className="tabular-nums text-fg-2">{formatClock(plan.onsite)}</bdi>
           </>
         ) : (
           <>
             <span className="text-fg-3">{labels.deliveryIn}</span>
-            <bdi className="font-semibold tabular-nums text-fg">{formatClock(plan.deliveredAt - time)}</bdi>
+            <bdi className="font-semibold tabular-nums text-fg">{formatClock(plan.onsite - time)}</bdi>
           </>
         )}
       </footer>

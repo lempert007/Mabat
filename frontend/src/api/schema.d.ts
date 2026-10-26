@@ -222,20 +222,35 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/projects/{project_id}/vehicles/{slot}": {
+    "/api/projects/{project_id}/mission-models": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Vehicle */
-        get: operations["get_vehicle_api_projects__project_id__vehicles__slot__get"];
-        /** Upload Vehicle */
-        put: operations["upload_vehicle_api_projects__project_id__vehicles__slot__put"];
+        get?: never;
+        put?: never;
+        /** Upload Model */
+        post: operations["upload_model_api_projects__project_id__mission_models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/projects/{project_id}/mission-models/{model_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Model */
+        get: operations["get_model_api_projects__project_id__mission_models__model_id__get"];
+        put?: never;
         post?: never;
-        /** Remove Vehicle */
-        delete: operations["remove_vehicle_api_projects__project_id__vehicles__slot__delete"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -421,6 +436,120 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Actor */
+        "Actor-Input": {
+            /** Id */
+            id: string;
+            /**
+             * Name
+             * @default
+             */
+            name?: string;
+            /**
+             * Kind
+             * @default parcel
+             * @enum {string}
+             */
+            kind?: "drone" | "rover" | "parcel";
+            /**
+             * Size
+             * @default 0.45
+             */
+            size?: number;
+            /**
+             * Color
+             * @default #c9a27a
+             */
+            color?: string;
+            rotation?: components["schemas"]["Quaternion-Input"] | null;
+            /** Model */
+            model?: string | null;
+            /**
+             * Rides
+             * @default hook
+             */
+            rides?: string | null;
+            /**
+             * Mount
+             * @default below
+             * @enum {string}
+             */
+            mount?: "below" | "above";
+            /**
+             * Leaves
+             * @default 0
+             */
+            leaves?: number;
+            /**
+             * Stayshooked
+             * @default false
+             */
+            staysHooked?: boolean;
+            /**
+             * Turns
+             * @default true
+             */
+            turns?: boolean;
+            /** Keys */
+            keys?: components["schemas"]["Keyframe-Input"][];
+        };
+        /** Actor */
+        "Actor-Output": {
+            /** Id */
+            id: string;
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /**
+             * Kind
+             * @default parcel
+             * @enum {string}
+             */
+            kind: "drone" | "rover" | "parcel";
+            /**
+             * Size
+             * @default 0.45
+             */
+            size: number;
+            /**
+             * Color
+             * @default #c9a27a
+             */
+            color: string;
+            rotation: components["schemas"]["Quaternion-Output"] | null;
+            /** Model */
+            model: string | null;
+            /**
+             * Rides
+             * @default hook
+             */
+            rides: string | null;
+            /**
+             * Mount
+             * @default below
+             * @enum {string}
+             */
+            mount: "below" | "above";
+            /**
+             * Leaves
+             * @default 0
+             */
+            leaves: number;
+            /**
+             * Stayshooked
+             * @default false
+             */
+            staysHooked: boolean;
+            /**
+             * Turns
+             * @default true
+             */
+            turns: boolean;
+            /** Keys */
+            keys: components["schemas"]["Keyframe-Output"][];
+        };
         /** AttachmentOut */
         AttachmentOut: {
             /**
@@ -482,8 +611,8 @@ export interface components {
             /** Poi Id */
             poi_id?: string | null;
         };
-        /** Body_upload_vehicle_api_projects__project_id__vehicles__slot__put */
-        Body_upload_vehicle_api_projects__project_id__vehicles__slot__put: {
+        /** Body_upload_model_api_projects__project_id__mission_models_post */
+        Body_upload_model_api_projects__project_id__mission_models_post: {
             /** File */
             file: string;
         };
@@ -747,6 +876,44 @@ export interface components {
              */
             attachmentsMissing: number;
         };
+        /**
+         * Keyframe
+         * @description Where an actor is at one moment: it arrives, waits, and moves on to the next.
+         */
+        "Keyframe-Input": {
+            /** At */
+            at: number;
+            place: components["schemas"]["Vec3"];
+            /**
+             * Lift
+             * @default 0
+             */
+            lift?: number;
+            /**
+             * Hold
+             * @default 0
+             */
+            hold?: number;
+        };
+        /**
+         * Keyframe
+         * @description Where an actor is at one moment: it arrives, waits, and moves on to the next.
+         */
+        "Keyframe-Output": {
+            /** At */
+            at: number;
+            place: components["schemas"]["Vec3"];
+            /**
+             * Lift
+             * @default 0
+             */
+            lift: number;
+            /**
+             * Hold
+             * @default 0
+             */
+            hold: number;
+        };
         /** LinkBlock */
         "LinkBlock-Input": {
             /** Id */
@@ -838,17 +1005,17 @@ export interface components {
             winchSpeed?: number;
             /**
              * Releaseheight
-             * @default 1.5
+             * @default 0
              */
             releaseHeight?: number;
             /**
              * Dwell
-             * @default 5
+             * @default 3
              */
             dwell?: number;
             carrier?: components["schemas"]["Vehicle-Input"];
-            droid?: components["schemas"]["Vehicle-Input"];
-            parcel?: components["schemas"]["Vehicle-Input"];
+            /** Actors */
+            actors?: components["schemas"]["Actor-Input"][];
             /** Stages */
             stages?: {
                 [key: string]: components["schemas"]["StageText-Input"];
@@ -900,23 +1067,31 @@ export interface components {
             winchSpeed: number;
             /**
              * Releaseheight
-             * @default 1.5
+             * @default 0
              */
             releaseHeight: number;
             /**
              * Dwell
-             * @default 5
+             * @default 3
              */
             dwell: number;
             carrier: components["schemas"]["Vehicle-Output"];
-            droid: components["schemas"]["Vehicle-Output"];
-            parcel: components["schemas"]["Vehicle-Output"];
+            /** Actors */
+            actors: components["schemas"]["Actor-Output"][];
             /** Stages */
             stages: {
                 [key: string]: components["schemas"]["StageText-Output"];
             };
             /** Noise */
             noise: components["schemas"]["NoiseZone-Output"][];
+        };
+        /**
+         * MissionModelOut
+         * @description An uploaded model, converted and stored. The mission refers to it by this id.
+         */
+        MissionModelOut: {
+            /** Id */
+            id: string;
         };
         /** ModelStats */
         ModelStats: {
@@ -1185,7 +1360,6 @@ export interface components {
             hasThumbnail: boolean;
             modelStats: components["schemas"]["ModelStats"];
             settings: components["schemas"]["ProjectSettings-Output"];
-            vehicles: components["schemas"]["VehicleVersions"];
             /** Poicount */
             poiCount: number;
             /** Createdby */
@@ -1431,7 +1605,7 @@ export interface components {
              */
             caption?: string;
             /** Shot */
-            shot?: ("chase" | "orbit" | "wide" | "ground" | "top" | "side" | "droid") | null;
+            shot?: ("chase" | "orbit" | "wide" | "ground" | "top" | "side" | "close") | null;
         };
         /** StageText */
         "StageText-Output": {
@@ -1446,7 +1620,7 @@ export interface components {
              */
             caption: string;
             /** Shot */
-            shot: ("chase" | "orbit" | "wide" | "ground" | "top" | "side" | "droid") | null;
+            shot: ("chase" | "orbit" | "wide" | "ground" | "top" | "side" | "close") | null;
         };
         /** TableBlock */
         "TableBlock-Input": {
@@ -1557,7 +1731,10 @@ export interface components {
             /** Z */
             z: number;
         };
-        /** Vehicle */
+        /**
+         * Vehicle
+         * @description The carrier.
+         */
         "Vehicle-Input": {
             /**
              * Name
@@ -1572,8 +1749,13 @@ export interface components {
              * @default #5b9cff
              */
             color?: string;
+            /** Model */
+            model?: string | null;
         };
-        /** Vehicle */
+        /**
+         * Vehicle
+         * @description The carrier.
+         */
         "Vehicle-Output": {
             /**
              * Name
@@ -1588,18 +1770,8 @@ export interface components {
              * @default #5b9cff
              */
             color: string;
-        };
-        /**
-         * VehicleVersions
-         * @description The version of each uploaded drone model, or null where the built-in one flies.
-         */
-        VehicleVersions: {
-            /** Carrier */
-            carrier: string | null;
-            /** Droid */
-            droid: string | null;
-            /** Parcel */
-            parcel: string | null;
+            /** Model */
+            model: string | null;
         };
     };
     responses: never;
@@ -2105,12 +2277,47 @@ export interface operations {
             };
         };
     };
-    get_vehicle_api_projects__project_id__vehicles__slot__get: {
+    upload_model_api_projects__project_id__mission_models_post: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                slot: "carrier" | "droid" | "parcel";
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_model_api_projects__project_id__mission_models_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MissionModelOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_model_api_projects__project_id__mission_models__model_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                model_id: string;
                 project_id: string;
             };
             cookie?: never;
@@ -2124,74 +2331,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    upload_vehicle_api_projects__project_id__vehicles__slot__put: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                slot: "carrier" | "droid" | "parcel";
-                project_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "multipart/form-data": components["schemas"]["Body_upload_vehicle_api_projects__project_id__vehicles__slot__put"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProjectOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    remove_vehicle_api_projects__project_id__vehicles__slot__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                slot: "carrier" | "droid" | "parcel";
-                project_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProjectOut"];
                 };
             };
             /** @description Validation Error */

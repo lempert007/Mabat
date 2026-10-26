@@ -6,10 +6,10 @@ import { DraggablePanel } from '@/components/ui/DraggablePanel';
 import { Segmented } from '@/components/ui/Segmented';
 import { RouteTab } from './RouteTab';
 import { FlightTab } from './FlightTab';
-import { FleetTab } from './FleetTab';
+import { SceneTab } from './SceneTab';
 import { StagesTab } from './StagesTab';
 import { NoiseTab } from './NoiseTab';
-import { useMissionStore } from '@/store/missionStore';
+import { useMissionStore, type MissionTab } from '@/store/missionStore';
 import { newMission } from '@/lib/mission/defaults';
 import { formatClock } from '@/lib/format';
 import type { MissionChange } from '@/hooks/useMissionSettings';
@@ -17,9 +17,7 @@ import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission, Project } from '@/types/api';
 import { t } from '@/i18n/he';
 
-type Tab = 'route' | 'flight' | 'fleet' | 'stages' | 'noise';
-
-const TABS: Tab[] = ['route', 'flight', 'fleet', 'stages', 'noise'];
+const TABS: MissionTab[] = ['route', 'flight', 'scene', 'stages', 'noise'];
 
 interface MissionPanelProps {
   open: boolean;
@@ -38,11 +36,12 @@ const copy = t.mission.panel;
  * Where the editor builds the mission. Like the scene settings it floats over the model without
  * a backdrop, so every change can be watched taking effect, and it saves as it goes.
  *
- * A project without a mission starts from one question: where does the parcel land. Everything
+ * A project without a mission starts from one question: where does the rope set down. Everything
  * else has a sensible default, so one click makes a mission that plays.
  */
 export function MissionPanel({ open, onClose, project, mission, plan, update, remove, onPreviewStage }: MissionPanelProps) {
-  const [tab, setTab] = useState<Tab>('route');
+  const tab = useMissionStore((s) => s.tab);
+  const setTab = useMissionStore((s) => s.setTab);
   const [confirming, setConfirming] = useState(false);
   const placing = useMissionStore((s) => s.placing);
   const setPlacing = useMissionStore((s) => s.setPlacing);
@@ -82,15 +81,15 @@ export function MissionPanel({ open, onClose, project, mission, plan, update, re
           </div>
         ) : (
           <div className="flex flex-col gap-5">
-            <Segmented<Tab>
+            <Segmented<MissionTab>
               size="sm"
               value={tab}
               onChange={setTab}
               options={TABS.map((value) => ({ value, label: copy.tabs[value] }))}
             />
             {tab === 'route' && <RouteTab project={project} mission={shown} plan={plan} update={update} />}
-            {tab === 'flight' && <FlightTab mission={shown} plan={plan} update={update} />}
-            {tab === 'fleet' && <FleetTab project={project} mission={shown} update={update} />}
+            {tab === 'flight' && <FlightTab projectId={project.id} mission={shown} plan={plan} update={update} />}
+            {tab === 'scene' && <SceneTab projectId={project.id} mission={shown} plan={plan} update={update} />}
             {tab === 'stages' && <StagesTab plan={plan} mission={shown} update={update} onPreview={onPreviewStage} />}
             {tab === 'noise' && <NoiseTab mission={shown} update={update} />}
           </div>

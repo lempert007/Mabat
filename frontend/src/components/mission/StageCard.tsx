@@ -18,7 +18,7 @@ interface StageCardProps {
  * the numbers that matter for it. Each stage slides in over the last.
  */
 export function StageCard({ plan, mission, current }: StageCardProps) {
-  const delivered = useMissionStore((s) => s.time >= plan.deliveredAt);
+  const delivered = useMissionStore((s) => s.time >= plan.onsite);
   const stage = plan.stages[current];
   const Icon = STAGE_ICONS[stage.kind];
   const facts = stageFacts(mission, plan, stage.kind);
@@ -47,7 +47,7 @@ export function StageCard({ plan, mission, current }: StageCardProps) {
                   {fact}
                 </span>
               ))}
-              {delivered && stage.kind === 'deliver' && (
+              {delivered && stage.kind === 'onsite' && (
                 <motion.span
                   className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2.5 py-1 text-[12px] font-medium text-success"
                   initial={{ opacity: 0, scale: 0.8 }}

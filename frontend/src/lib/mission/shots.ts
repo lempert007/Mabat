@@ -17,7 +17,7 @@ const UP = new Vector3(0, 1, 0);
  */
 export function shotPose(shot: CameraShot, plan: MissionPlan, frame: MissionFrame, time: number): ShotPose {
   const u = plan.unitsPerMeter;
-  const reach = Math.max(plan.size.carrier * 6, 20 * u);
+  const reach = Math.max(plan.carrier.size * 6, 20 * u);
   const forward = new Vector3(Math.sin(frame.heading), 0, Math.cos(frame.heading));
   const right = new Vector3(-forward.z, 0, forward.x);
   const carrier = frame.carrier;
@@ -45,26 +45,32 @@ export function shotPose(shot: CameraShot, plan: MissionPlan, frame: MissionFram
       return { eye: target.clone().add(offset), target };
     }
     case 'ground': {
-      // Ride down beside the droid like a camera on a crane, a little above it. It stands on the
+      // Ride down beside the load like a camera on a crane, a little above it. It stands on the
       // outer side of the drop and looks back across the site, so the model fills the background,
-      // and looking slightly down keeps the yard the droid is heading for in the picture.
+      // and looking slightly down keeps the yard the load is heading for in the picture.
       const away = plan.drop.clone().sub(plan.site.center).setY(0);
       if (away.lengthSq() < u * u) away.subVectors(plan.drop, plan.hover).setY(0);
       if (away.lengthSq() < u * u) away.set(-0.6, 0, 0.8);
       away.normalize();
       const eye = plan.drop.clone().addScaledVector(away, 12 * u);
-      eye.y = Math.max(frame.droid.y + 2.5 * u, plan.drop.y + 3 * u);
-      return { eye, target: frame.droid.clone() };
+      eye.y = Math.max(frame.focus.y + 2.5 * u, plan.drop.y + 3 * u);
+      return { eye, target: frame.focus.clone() };
     }
     case 'top':
       return {
-        eye: frame.droid.clone().addScaledVector(UP, 18 * u).addScaledVector(forward, -0.5 * u),
-        target: frame.droid.clone().lerp(plan.drop, 0.6),
+        eye: frame.focus.clone().addScaledVector(UP, 18 * u).addScaledVector(forward, -0.5 * u),
+        target: frame.focus.clone().lerp(plan.drop, 0.6),
       };
-    case 'droid':
+    case 'close': {
+      // Beside whatever is moving, far enough back to keep all of it in the picture, and
+      // turning slowly round it so a long drive is not one fixed angle.
+      const away = Math.max(5 * u, frame.focusSize * 5);
+      const angle = time * 0.05 + 0.9;
+      const around = new Vector3(Math.sin(angle), 0, Math.cos(angle));
       return {
-        eye: frame.droid.clone().addScaledVector(right, 4 * u).addScaledVector(UP, 1.5 * u).addScaledVector(forward, -u),
-        target: frame.droid.clone().lerp(frame.parcel, 0.5),
+        eye: frame.focus.clone().addScaledVector(around, away).addScaledVector(UP, Math.max(1.8 * u, away * 0.45)),
+        target: frame.focus.clone(),
       };
+    }
   }
 }

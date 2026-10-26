@@ -272,6 +272,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
           stage={show.stage}
           onStep={show.step}
           telemetryHidden={nav.selected !== null}
+          update={editable ? show.update : undefined}
         />
       ) : (
         <ViewerBottomBar>
@@ -290,7 +291,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         editable={editable && !show.visible}
         hint={show.visible ? t.mission.keysHint : undefined}
       />
-      <PlacementBanner onUndo={show.undoPlace} />
+      <PlacementBanner mission={show.mission} onUndo={show.undoPlace} />
 
       <IntroOverlay project={project} onWatch={plan ? show.watch : undefined} />
       <LoadingOverlay />

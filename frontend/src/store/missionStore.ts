@@ -1,7 +1,5 @@
 import { create } from 'zustand';
-import { BUILT_IN_HEIGHT } from '@/lib/mission/defaults';
-import type { MissionPlan } from '@/lib/mission/types';
-import type { VehicleSlot } from '@/types/api';
+import type { MissionPlan, ModelHeights } from '@/lib/mission/types';
 
 /** Which showcase is on screen: the model with its points, or the mission playing over it. */
 export type ShowcaseView = 'explore' | 'mission';
@@ -18,15 +16,42 @@ export interface NoiseTarget {
   vertex?: number;
 }
 
+/** An actor's keyframes being added one after another, or one of them being moved. */
+export interface ActorTarget {
+  actor: string;
+  key?: number;
+}
+
 /**
  * What the editor's next click on the model places. New waypoints, like the points of a noise
- * contour, keep coming until stopped; a number moves the waypoint at that index.
+ * contour and an actor's keyframes, keep coming until stopped; a number moves the waypoint at
+ * that index.
  */
-export type PlaceTarget = 'drop' | 'hover' | 'hub' | 'waypoint' | number | NoiseTarget;
+export type PlaceTarget = 'drop' | 'hover' | 'hub' | 'waypoint' | number | NoiseTarget | ActorTarget;
+
+export const noiseTarget = (target: PlaceTarget | null): NoiseTarget | null =>
+  typeof target === 'object' && target !== null && 'zone' in target ? target : null;
+
+export const actorTarget = (target: PlaceTarget | null): ActorTarget | null =>
+  typeof target === 'object' && target !== null && 'actor' in target ? target : null;
 
 /** The placements that add point after point, where the last one can be taken back. */
-export const isTracing = (target: PlaceTarget | null) =>
-  target === 'waypoint' || (typeof target === 'object' && target !== null && target.vertex === undefined);
+export function isTracing(target: PlaceTarget | null): boolean {
+  if (target === 'waypoint') return true;
+  const noise = noiseTarget(target);
+  if (noise) return noise.vertex === undefined;
+  const actor = actorTarget(target);
+  return actor !== null && actor.key === undefined;
+}
+
+/** The mission panel's tabs. The timeline of the ground shows while its tab is open. */
+export type MissionTab = 'route' | 'flight' | 'scene' | 'stages' | 'noise';
+
+/** The actor being edited, and which of its keyframes, if one. */
+export interface Selection {
+  actor: string;
+  key: number | null;
+}
 
 export const PLAYBACK_RATES = [0.5, 1, 2, 4];
 
@@ -47,10 +72,12 @@ interface MissionState {
   placing: PlaceTarget | null;
   /** The mission panel is open, so the handles for editing are drawn. */
   editing: boolean;
-  /** How tall each drone model turned out, as a fraction of its size. Built-in until measured. */
-  heights: Record<VehicleSlot, number>;
+  /** How tall each uploaded model turned out. Anything else stands at its built-in height. */
+  heights: ModelHeights;
   /** The noise contours are drawn on the ground. Off until someone asks for them. */
   noiseShown: boolean;
+  tab: MissionTab;
+  selected: Selection | null;
 
   setView: (view: ShowcaseView) => void;
   /** Opens the mission from its first moment, playing, with the director at the camera. */
@@ -66,8 +93,11 @@ interface MissionState {
   setLoopStage: (loop: boolean) => void;
   setPlacing: (placing: PlaceTarget | null) => void;
   setEditing: (editing: boolean) => void;
-  setHeight: (slot: VehicleSlot, height: number) => void;
+  /** Null forgets a height, once its model is gone. */
+  setHeight: (measures: string, height: number | null) => void;
   setNoiseShown: (shown: boolean) => void;
+  setTab: (tab: MissionTab) => void;
+  select: (selection: Selection | null) => void;
   reset: () => void;
 }
 
@@ -81,8 +111,10 @@ const initialState = {
   loopStage: false,
   placing: null as PlaceTarget | null,
   editing: false,
-  heights: BUILT_IN_HEIGHT,
+  heights: {} as ModelHeights,
   noiseShown: false,
+  tab: 'route' as MissionTab,
+  selected: null as Selection | null,
 };
 
 /** The stage a moment belongs to. A moment exactly on a boundary starts the next stage. */
@@ -117,9 +149,21 @@ export const useMissionStore = create<MissionState>((set, get) => ({
   // Aiming at a moving picture is hopeless, so placing anything stills the camera. Tracing a
   // noise contour blind would be just as hopeless, so it brings the noise map up.
   setPlacing: (placing) =>
-    set(placing === null ? { placing } : { placing, camera: 'free', ...(typeof placing === 'object' && { noiseShown: true }) }),
+    set(
+      placing === null
+        ? { placing }
+        : { placing, camera: 'free', ...(noiseTarget(placing) && { noiseShown: true }) },
+    ),
   setEditing: (editing) => set({ editing, placing: editing ? get().placing : null }),
-  setHeight: (slot, height) => set((state) => ({ heights: { ...state.heights, [slot]: height } })),
+  setHeight: (measures, height) =>
+    set((state) => {
+      const heights = { ...state.heights };
+      if (height === null) delete heights[measures];
+      else heights[measures] = height;
+      return { heights };
+    }),
   setNoiseShown: (noiseShown) => set({ noiseShown }),
+  setTab: (tab) => set({ tab }),
+  select: (selected) => set({ selected }),
   reset: () => set({ ...initialState }),
 }));

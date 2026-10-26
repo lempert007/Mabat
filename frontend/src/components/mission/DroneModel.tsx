@@ -1,12 +1,7 @@
-import { useRef } from 'react';
-import { useFrame } from '@react-three/fiber';
 import { RoundedBox } from '@react-three/drei';
-import { Color, type MeshStandardMaterial } from 'three';
 import { Rotor } from './Rotor';
-import { missionLive } from '@/store/missionLive';
 
 const BODY = '#eef1f5';
-const DELIVERED = new Color('#34c76f');
 
 /** Ducted fans at the corners: x, z. */
 const FANS: [number, number][] = [
@@ -16,27 +11,20 @@ const FANS: [number, number][] = [
   [-0.378, -0.16],
 ];
 
-/** The droid's fans work while it is off the carrier, steering it down the tether. */
-const fans = () => ((missionLive.frame?.payout ?? 0) > 0.05 ? 0.85 : 0);
+interface DroneModelProps {
+  color: string;
+  /** How hard its fans are working right now, 0 to 1. */
+  power: () => number;
+}
 
 /**
- * The built-in droid: a pod with four ducted fans, an eye on top for the tether and claws
- * underneath for the parcel. A light band runs round it in the livery colour and turns green
- * once the parcel is down.
+ * The built-in drone: a pod with four ducted fans, an eye on top for the rope and claws
+ * underneath for whatever it carries, with a light band round it in the livery colour.
  *
  * Drawn one unit wide with its nose along +Z, centred on its bounding box. Its height is
- * `BUILT_IN_HEIGHT.droid`.
+ * `BUILT_IN_HEIGHT.drone`.
  */
-export function DroidModel({ color }: { color: string }) {
-  const band = useRef<MeshStandardMaterial>(null);
-  const livery = new Color(color);
-
-  useFrame(() => {
-    if (!band.current) return;
-    const done = missionLive.frame?.parcelState === 'delivered';
-    band.current.emissive.copy(done ? DELIVERED : livery);
-  });
-
+export function DroneModel({ color, power }: DroneModelProps) {
   return (
     <group>
       <RoundedBox args={[0.56, 0.34, 0.46]} radius={0.07} smoothness={3}>
@@ -46,7 +34,7 @@ export function DroidModel({ color }: { color: string }) {
         <meshStandardMaterial color={color} roughness={0.45} />
       </RoundedBox>
       <RoundedBox args={[0.57, 0.02, 0.47]} radius={0.01} smoothness={2} position={[0, -0.1, 0]}>
-        <meshStandardMaterial ref={band} color="#0b0b0e" emissive={color} emissiveIntensity={2.2} toneMapped={false} />
+        <meshStandardMaterial color="#0b0b0e" emissive={color} emissiveIntensity={2.2} toneMapped={false} />
       </RoundedBox>
 
       {FANS.map(([x, z], index) => (
@@ -59,7 +47,7 @@ export function DroidModel({ color }: { color: string }) {
             <torusGeometry args={[0.1, 0.022, 10, 28]} />
             <meshStandardMaterial color={BODY} roughness={0.4} />
           </mesh>
-          <Rotor position={[0, 0, 0]} span={0.18} power={fans} direction={index % 2 ? 1 : -1} />
+          <Rotor position={[0, 0, 0]} span={0.18} power={power} direction={index % 2 ? 1 : -1} />
         </group>
       ))}
 

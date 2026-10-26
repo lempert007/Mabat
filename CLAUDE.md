@@ -26,7 +26,8 @@ Read `DESIGN.md` before changing architecture.
   save when it does not, and ask before discarding. Never label a drafted value as saved.
 - Point coordinates are world-space. Anything that moves the model as a whole, such as
   `modelRotation`, has to move the project's points by the same amount or they detach from it.
-  A mission's places are world-space too: `turnMission` turns them in the same patch.
+  A mission's places, its actors' keyframes and its noise contours are world-space too:
+  `turnMission` turns them in the same patch.
 - A mission is a pure function of time (`buildPlan` → `frameAt`). Nothing drawn for it keeps
   motion of its own or accumulates state between frames; it reads `missionLive.frame`.
 - `MissionClock` runs at `useFrame` priority −1 so it publishes the frame before anything reads

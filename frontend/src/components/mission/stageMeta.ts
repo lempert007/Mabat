@@ -2,7 +2,7 @@ import {
   ArrowDownToLine,
   Crosshair,
   Navigation,
-  PackageCheck,
+  PackageOpen,
   PlaneLanding,
   PlaneTakeoff,
   Route,
@@ -10,7 +10,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { fill } from '@/lib/interpolate';
-import { formatMeasure } from '@/lib/format';
+import { formatClock, formatMeasure } from '@/lib/format';
+import { movers } from '@/lib/mission/names';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission, StageKind } from '@/types/api';
 import { t } from '@/i18n/he';
@@ -20,7 +21,7 @@ export const STAGE_ICONS: Record<StageKind, LucideIcon> = {
   cruise: Navigation,
   approach: Crosshair,
   lower: ArrowDownToLine,
-  deliver: PackageCheck,
+  onsite: PackageOpen,
   raise: ChevronsUp,
   return: Route,
   land: PlaneLanding,
@@ -55,8 +56,11 @@ export function stageFacts(mission: Mission, plan: MissionPlan, kind: StageKind)
       return [fill(facts.hover, { value: number(mission.hoverAltitude) })];
     case 'lower':
       return [fill(facts.tether, { value: number(payout) }), fill(facts.winch, { value: number(mission.winchSpeed, 1) })];
-    case 'deliver':
-      return [fill(facts.release, { value: number(mission.releaseHeight, 1) }), fill(facts.dwell, { value: number(mission.dwell) })];
+    case 'onsite': {
+      const moving = mission.actors.some((actor) => actor.keys.length > 0);
+      const stage = plan.stages.find((s) => s.kind === 'onsite');
+      return [...(moving ? [movers(mission)] : []), fill(facts.onsite, { value: formatClock(stage?.duration ?? 0) })];
+    }
     case 'raise':
       return [fill(facts.winch, { value: number(mission.winchSpeed, 1) })];
     case 'land':

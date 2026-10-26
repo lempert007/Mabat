@@ -1,8 +1,9 @@
 import { MathUtils, Vector3 } from 'three';
 import { profile, type Motion } from './profile';
 import { BUILT_IN_HEIGHT } from './defaults';
+import { animate, lineUp, newPose } from './cast';
 import { entryPoint, lerpAngle, makeRoute, turnBetween, type Route } from './route';
-import type { MissionFrame, MissionPlan, PlannedStage, Site, VehicleHeights } from './types';
+import type { MissionFrame, MissionPlan, ModelHeights, PlannedStage, Site } from './types';
 import { toVector3 } from '@/lib/vec';
 import type { Mission, StageKind } from '@/types/api';
 
@@ -11,8 +12,6 @@ const GRAVITY = 9.81;
 const FLIGHT_ACCEL = 3;
 /** Climbs, descents and the winch, m/s². */
 const LIFT_ACCEL = 1.2;
-/** The parcel's own short line once the droid holds over the drop, m/s. */
-const PARCEL_SPEED = 0.8;
 /** Shortest climb back to cruise, so turning for home is never a snap, s. */
 const MIN_TURN = 3;
 /** Settling into the hover before the winch starts, s. */
@@ -21,9 +20,9 @@ const SETTLE = 2;
 const SPOOL = 1.5;
 /** Blending from hovering on the lift rotors to flying on the pusher, s. */
 const TRANSITION = 4;
-/** Below this much tether the droid still rides the carrier's bob, m. */
+/** Below this much rope the load still rides the carrier's bob, m. */
 const RIDE = 5;
-/** How far the droid swings on a long tether, m. */
+/** How far the load swings on a long rope, m. */
 const SWING = 0.18;
 const MAX_BANK = MathUtils.degToRad(28);
 /** Stages shorter than this would be a sliver on the timeline, so they are left out, s. */
@@ -42,28 +41,25 @@ const smoothstep = (from: number, to: number, value: number) =>
  * The whole show is that pure function. Playing, scrubbing, jumping to a stage and looping are
  * all just asking for another moment, so nothing can drift, and the trail, the telemetry and
  * the cameras can each look at whatever moment they need.
+ *
+ * The flight is fixed: out along the route, down to the hover, the rope paid out until its load
+ * touches down, and home again. What happens on the ground in between is the editor's, in each
+ * actor's keyframes (`cast.ts`), and the carrier waits until all of it is done.
  */
-export function buildPlan(
-  mission: Mission,
-  site: Site,
-  heights: VehicleHeights = BUILT_IN_HEIGHT,
-): MissionPlan | null {
+export function buildPlan(mission: Mission, site: Site, heights: ModelHeights = {}): MissionPlan | null {
   if (!mission.drop) return null;
   const u = mission.unitsPerMeter;
-  const size = { carrier: mission.carrier.size * u, droid: mission.droid.size * u, parcel: mission.parcel.size * u };
-  const halfHeight = {
-    carrier: (size.carrier * heights.carrier) / 2,
-    droid: (size.droid * heights.droid) / 2,
-    parcel: (size.parcel * heights.parcel) / 2,
-  };
+  const carrierSize = mission.carrier.size * u;
+  const carrierHalf = (carrierSize * (heights.carrier ?? BUILT_IN_HEIGHT.carrier)) / 2;
+  const lineup = lineUp(mission.actors, heights, u);
+  const stack = lineup.loadUp + lineup.loadDown;
 
-  // The tether runs from the winch to the top of the droid, holding the parcel at release height.
+  // The rope runs from the winch to the top of the load, and lets it go with its foot at the
+  // release height.
   const drop = toVector3(mission.drop);
   const ground = drop.y;
-  const releaseTop = drop
-    .clone()
-    .setY(ground + mission.releaseHeight * u + 2 * halfHeight.parcel + 2 * halfHeight.droid);
-  const hoverY = Math.max(ground + mission.hoverAltitude * u, releaseTop.y + halfHeight.carrier + u);
+  const releaseTop = drop.clone().setY(ground + mission.releaseHeight * u + stack);
+  const hoverY = Math.max(ground + mission.hoverAltitude * u, releaseTop.y + carrierHalf + u);
   const cruiseY = Math.max(ground + mission.cruiseAltitude * u, hoverY);
   const hover = new Vector3(mission.hover?.x ?? drop.x, hoverY, mission.hover?.z ?? drop.z);
   const hub = mission.hub ? toVector3(mission.hub) : null;
@@ -76,11 +72,11 @@ export function buildPlan(
   const arriving = out.heading(out.length);
   const sideways = new Vector3(Math.cos(arriving), 0, -Math.sin(arriving));
 
-  // On the pad the droid and its parcel hang under the carrier, so it stands on legs that tall.
-  const clearance = 2 * halfHeight.droid + 2 * halfHeight.parcel + 0.05 * u;
-  const padY = (hub?.y ?? ground) + halfHeight.carrier + clearance;
+  // On the pad the load hangs under the carrier, so it stands on legs that tall.
+  const legs = stack + 0.05 * u;
+  const padY = (hub?.y ?? ground) + carrierHalf + legs;
 
-  const winchAtHover = hover.clone().setY(hoverY - halfHeight.carrier);
+  const winchAtHover = hover.clone().setY(hoverY - carrierHalf);
   const reach = winchAtHover.distanceTo(releaseTop);
   const payoutMax = Math.min(reach, mission.tetherLength * u);
   const lineDirection = releaseTop.clone().sub(winchAtHover).normalize();
@@ -91,13 +87,11 @@ export function buildPlan(
 
   /* ---------------------------------------------------------------- frame helpers */
 
-  /** The droid hangs under the carrier's belly and the parcel under the droid. */
+  /** The rope is wound in and its load hangs against the carrier's belly. */
   const stow = (frame: MissionFrame) => {
-    frame.winch.copy(frame.carrier).y -= halfHeight.carrier;
-    frame.droid.copy(frame.winch).y -= halfHeight.droid;
-    frame.parcel.copy(frame.droid).y -= halfHeight.droid + halfHeight.parcel;
+    frame.winch.copy(frame.carrier).y -= carrierHalf;
+    frame.hook.copy(frame.winch);
     frame.payout = 0;
-    frame.parcelState = 'carried';
   };
 
   /** Flying a route: position, heading, a bank into turns and a nod with each change of speed. */
@@ -130,25 +124,23 @@ export function buildPlan(
     frame.heading = arriving;
     frame.lift = 1;
     bob(frame, time);
-    frame.winch.copy(frame.carrier).y -= halfHeight.carrier;
+    frame.winch.copy(frame.carrier).y -= carrierHalf;
   };
 
   /**
-   * Puts the droid on the tether. Close under the carrier it rides the carrier's bob; further
-   * down it swings with the period of a pendulum that long, easing off as its fans hold it
-   * over the drop.
+   * Pays the rope out. Close under the carrier its load rides the carrier's bob; further down
+   * it swings with the period of a pendulum that long, easing off as it settles over the drop.
    */
   const hang = (frame: MissionFrame, payout: number, settled: number, time: number) => {
     const meters = payout / u;
     const swing =
       SWING * u * Math.min(1, meters / 8) * (1 - settled) *
       (Math.sin((time / swingPeriod) * Math.PI * 2) + 0.3 * Math.sin(time * 8.2));
-    frame.droid
+    frame.hook
       .copy(frame.winch)
       .lerp(winchAtHover, Math.min(1, meters / RIDE))
       .addScaledVector(lineDirection, payout)
       .addScaledVector(sideways, swing);
-    frame.droid.y -= halfHeight.droid;
     frame.payout = meters;
   };
 
@@ -191,35 +183,29 @@ export function buildPlan(
     holdOver(frame, time);
     const payout = winch.at(local).distance;
     hang(frame, payout, smoothstep(0.75, 1, payout / payoutMax), time);
-    frame.parcel.copy(frame.droid).y -= halfHeight.droid + halfHeight.parcel;
-    frame.parcelState = 'carried';
   });
 
-  // Where the droid holds while the parcel goes down: the end of the tether, wherever that is.
+  // The rope's end with the load touching down: wherever the rope reaches.
   const held = winchAtHover.clone().addScaledVector(lineDirection, payoutMax);
-  held.y -= halfHeight.droid;
-  const parcelFrom = held.y - halfHeight.droid - halfHeight.parcel;
-  const parcelTo = ground + halfHeight.parcel;
-  const letDown = vertical(parcelFrom - parcelTo, PARCEL_SPEED);
-  const delivered = (frame: MissionFrame) => {
-    frame.parcel.set(held.x, parcelTo, held.z);
-    frame.parcelState = 'delivered';
+  const reelIn = (frame: MissionFrame, reeled: number, time: number) => {
+    const payout = payoutMax - winch.at(reeled).distance;
+    hang(frame, payout, 1 - smoothstep(0, winch.duration * 0.25, reeled), time);
   };
 
-  add('deliver', 0.5 + letDown.duration + mission.dwell, (local, time, frame) => {
+  // A load set free lets the rope go straight back up; one that stays on waits down there.
+  const keepsLoad = lineup.load !== -1 && mission.actors[lineup.load].staysHooked;
+  const onsite = lineup.showEnd + mission.dwell;
+  add('onsite', onsite, (local, time, frame) => {
     holdOver(frame, time);
-    frame.droid.copy(held);
-    frame.droid.y += Math.sin(time * 1.7) * 0.03 * u * smoothstep(0, 1, local);
-    frame.payout = payoutMax / u;
-    frame.parcel.set(held.x, parcelFrom - letDown.at(local - 0.5).distance, held.z);
-    frame.parcelState = local < 0.5 ? 'carried' : local < 0.5 + letDown.duration ? 'lowering' : 'delivered';
+    if (keepsLoad) {
+      frame.hook.copy(held);
+      frame.payout = payoutMax / u;
+    } else reelIn(frame, local, time);
   });
 
-  add('raise', winch.duration, (local, time, frame) => {
+  add('raise', keepsLoad ? winch.duration : winch.duration - onsite, (local, time, frame) => {
     holdOver(frame, time);
-    const payout = payoutMax - winch.at(local).distance;
-    hang(frame, payout, 1 - smoothstep(0, winch.duration * 0.25, local), time);
-    delivered(frame);
+    reelIn(frame, keepsLoad ? local : onsite + local, time);
   });
 
   const climbBack = vertical(cruiseY - hoverY, mission.climbRate);
@@ -236,7 +222,6 @@ export function buildPlan(
       fly(frame, back, home.at(local - climbTime), local - climbTime, home.duration);
     }
     stow(frame);
-    delivered(frame);
   });
 
   if (hub) {
@@ -248,7 +233,6 @@ export function buildPlan(
       frame.lift = 1 - smoothstep(settle.duration, settle.duration + SPOOL, local);
       frame.gear = smoothstep(settle.duration - 4, settle.duration - 1.5, local);
       stow(frame);
-      delivered(frame);
     });
   }
 
@@ -262,15 +246,17 @@ export function buildPlan(
   }
   const duration = clock;
   const startOf = (kind: StageKind) => stages.find((stage) => stage.kind === kind);
+  const lowered = startOf('lower');
+  const touchdown = lowered ? lowered.start + lowered.duration : (startOf('onsite')?.start ?? 0);
+  const wound = startOf('raise') ?? startOf('onsite');
   hoverFrom = (startOf('approach')?.start ?? 0) + descend.duration;
-  hoverTo = (startOf('raise')?.start ?? hoverFrom) + winch.duration;
-  const deliveredAt = (startOf('deliver')?.start ?? duration) + 0.5 + letDown.duration;
+  hoverTo = wound ? wound.start + wound.duration : touchdown;
 
-  const sample = (time: number): MissionFrame => {
+  /** The carrier and the rope at a moment, before anything on the ground is placed. */
+  const base = (time: number): MissionFrame => {
     const at = MathUtils.clamp(time, 0, duration);
     const index = stageIndexAt({ stages }, at);
     const stage = stages[index];
-    const local = at - stage.start;
     const frame: MissionFrame = {
       stage: index,
       carrier: new Vector3(),
@@ -281,12 +267,35 @@ export function buildPlan(
       thrust: 0,
       gear: 0,
       winch: new Vector3(),
-      droid: new Vector3(),
+      hook: new Vector3(),
       payout: 0,
-      parcel: new Vector3(),
-      parcelState: 'carried',
+      actors: mission.actors.map(newPose),
+      focus: new Vector3(),
+      subject: 'carrier',
+      focusSize: carrierSize,
     };
-    specs[index].sample(local, at, frame);
+    specs[index].sample(at - stage.start, at, frame);
+    return frame;
+  };
+
+  const cast = animate(lineup, { onsite: touchdown, releasedAloft: mission.releaseHeight > 0.05, base, unitsPerMeter: u });
+
+  const sample = (time: number): MissionFrame => {
+    const at = MathUtils.clamp(time, 0, duration);
+    const frame = base(at);
+    cast.place(frame, at);
+    // In the air the camera watches the carrier; once the rope goes down, the ground.
+    const kind = stages[frame.stage].kind;
+    const watched = kind === 'onsite' ? cast.focusAt(at) : kind === 'lower' ? lineup.load : null;
+    if (watched !== null && watched >= 0) {
+      frame.subject = watched;
+      frame.focus.copy(frame.actors[watched].position);
+      frame.focusSize = cast.members[watched].size;
+    } else if (watched === -1 || kind === 'raise') {
+      frame.subject = 'hook';
+      frame.focus.copy(frame.hook);
+      frame.focusSize = u;
+    } else frame.focus.copy(frame.carrier);
     return frame;
   };
 
@@ -297,8 +306,8 @@ export function buildPlan(
   };
 
   const path: Vector3[] = [];
-  for (let step = 0; step * PATH_STEP < duration; step += 1) path.push(sample(step * PATH_STEP).carrier);
-  path.push(sample(duration).carrier);
+  for (let step = 0; step * PATH_STEP < duration; step += 1) path.push(base(step * PATH_STEP).carrier);
+  path.push(base(duration).carrier);
 
   return {
     stages,
@@ -311,9 +320,9 @@ export function buildPlan(
     cruiseY,
     hub,
     site,
-    size,
-    halfHeight,
-    deliveredAt,
+    carrier: { size: carrierSize, half: carrierHalf, legs },
+    cast: cast.members,
+    onsite: touchdown,
     tetherNeeded: reach / u,
     routeLength: out.length / u,
     unitsPerMeter: u,
