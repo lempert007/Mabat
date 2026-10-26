@@ -44,7 +44,7 @@ def list_editors() -> None:
 
 
 # The interface's API types are generated from this file, so it is committed and kept current.
-OPENAPI_PATH = Path(__file__).resolve().parents[2] / "frontend" / "openapi.json"
+OPENAPI_PATH = Path(__file__).resolve().parents[2] / "client" / "openapi.json"
 
 
 def openapi_document() -> str:
@@ -57,7 +57,7 @@ def openapi_document() -> str:
 def export_openapi() -> None:
     """Write the API schema the interface's types are generated from."""
     OPENAPI_PATH.write_text(openapi_document(), encoding="utf-8")
-    typer.echo(f"Wrote {OPENAPI_PATH}. Now run: cd frontend && npm run api:types")
+    typer.echo(f"Wrote {OPENAPI_PATH}. Now run: cd client && npm run api:types")
 
 
 if __name__ == "__main__":

@@ -5,26 +5,26 @@
       // Brings the database up and migrates it first, then serves the API with reload.
       // Breakpoints land in the reloader's child process, which is why subProcess is on.
       // Drop "--reload" if you would rather the process never restart under you.
-      "name": "Backend (FastAPI)",
+      "name": "Server (FastAPI)",
       "type": "debugpy",
       "request": "launch",
       "module": "uvicorn",
       "args": ["app.main:app", "--host", "127.0.0.1", "--port", "8000", "--reload"],
-      "cwd": "${workspaceFolder}/backend",
-      "python": "${workspaceFolder}/backend/.venv/bin/python",
-      "windows": { "python": "${workspaceFolder}/backend/.venv/Scripts/python.exe" },
+      "cwd": "${workspaceFolder}/server",
+      "python": "${workspaceFolder}/server/.venv/bin/python",
+      "windows": { "python": "${workspaceFolder}/server/.venv/Scripts/python.exe" },
       "preLaunchTask": "db: migrate",
       "subProcess": true,
       "justMyCode": false,
       "console": "integratedTerminal"
     },
     {
-      // Vite proxies /api to the backend, so this is the address to open.
-      "name": "Frontend (Vite)",
+      // Vite proxies /api to the server, so this is the address to open.
+      "name": "Client (Vite)",
       "type": "node-terminal",
       "request": "launch",
       "command": "npm run dev",
-      "cwd": "${workspaceFolder}/frontend",
+      "cwd": "${workspaceFolder}/client",
       "serverReadyAction": {
         "pattern": "Local:\\s+(https?://\\S+)",
         "uriFormat": "%s",
@@ -36,7 +36,7 @@
     {
       // Everything needed to work on the app: database, API, and the interface.
       "name": "Mabat: full stack",
-      "configurations": ["Backend (FastAPI)", "Frontend (Vite)"],
+      "configurations": ["Server (FastAPI)", "Client (Vite)"],
       "stopAll": true,
       "presentation": { "group": "mabat", "order": 1 }
     }

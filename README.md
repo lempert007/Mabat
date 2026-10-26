@@ -16,7 +16,7 @@ See [DESIGN.md](DESIGN.md) for the architecture and [CLAUDE.md](CLAUDE.md) for c
 
 FastAPI (Python 3.12) · PostgreSQL 16 · React 18 + TypeScript · react-three-fiber · Tailwind v4
 
-The interface is in Hebrew, right to left. The Assistant typeface is served from `frontend/public/fonts`,
+The interface is in Hebrew, right to left. The Assistant typeface is served from `client/public/fonts`,
 so no font is ever fetched from the network.
 
 ## Local development
@@ -26,7 +26,7 @@ Requirements: Python 3.12, `uv`, Node 22+, a PostgreSQL server.
 ```bash
 cp .env.example .env            # edit DATABASE_URL, MABAT_SECRET_KEY, MABAT_STORAGE_ROOT
 createuser mabat -P && createdb -O mabat mabat
-cd backend && uv sync && cd ../frontend && npm install
+cd server && uv sync --extra dev && cd ../client && npm install
 ```
 
 In VS Code, run **Mabat: full stack** from the Run and Debug panel. It brings the database up,
@@ -37,10 +37,10 @@ To do it by hand instead:
 
 ```bash
 ./scripts/ensure-db.sh                          # uses a running PostgreSQL, or starts the container
-cd backend && uv run alembic upgrade head
+cd server && uv run alembic upgrade head
 uv run uvicorn app.main:app --reload            # http://localhost:8000
 
-cd ../frontend && npm run dev                   # http://localhost:5173 (proxies /api)
+cd ../client && npm run dev                   # http://localhost:5173 (proxies /api)
 ```
 
 `scripts/ensure-db.sh` leaves an existing PostgreSQL alone, so a local install is used as-is and
@@ -58,8 +58,8 @@ winget install PostgreSQL.PostgreSQL.16          # registers a service that star
   -c "CREATE ROLE mabat LOGIN CREATEDB PASSWORD 'change-me';" -c "CREATE DATABASE mabat OWNER mabat;"
 Copy-Item .env.example .env
 powershell -ExecutionPolicy Bypass -File scripts\ensure-db.ps1
-cd backend; uv sync; uv run alembic upgrade head; uv run uvicorn app.main:app --reload
-cd ..\frontend; npm install; npm run dev
+cd server; uv sync --extra dev; uv run alembic upgrade head; uv run uvicorn app.main:app --reload
+cd ..\client; npm install; npm run dev
 ```
 
 The first editor account comes from `MABAT_INITIAL_EDITOR_USERNAME` / `MABAT_INITIAL_EDITOR_PASSWORD`
@@ -72,15 +72,25 @@ guest access.
 
 ## Deploying on the offline Ubuntu host
 
-Docker Compose runs Postgres, the API and nginx (static frontend + `/api` proxy).
+Docker Compose runs Postgres, the API and nginx (the static client + `/api` proxy). Nothing is
+fetched at run time: the typeface, the Draco decoder, the icons and the lighting are all in the
+build, and the API's interactive docs, which load from a CDN, are switched off.
+
+Building needs the internet once, so build on a connected machine and carry the images across:
 
 ```bash
-cp .env.example .env    # set MABAT_SECRET_KEY, POSTGRES_PASSWORD, MABAT_STORAGE_ROOT, initial editor
-docker compose build    # needs internet once, or build elsewhere and `docker save` / `docker load`
-docker compose up -d    # http://<host>/
+./scripts/offline-bundle.sh          # Windows: scripts\offline-bundle.ps1 → mabat-images.tar
 ```
 
-`MABAT_STORAGE_ROOT` on the host is bind-mounted into the backend. Models, covers and attachments live
+Then on the offline host, with this repository and the tar copied over:
+
+```bash
+cp .env.example .env                 # set MABAT_SECRET_KEY, POSTGRES_PASSWORD, MABAT_STORAGE_ROOT, initial editor
+docker load -i mabat-images.tar      # the server, the client and Postgres
+docker compose up -d --no-build      # http://<host>/
+```
+
+`MABAT_STORAGE_ROOT` on the host is bind-mounted into the server. Models, covers and attachments live
 under `<storage>/projects/<project-id>/`. Back that folder up together with the database.
 
 Optional: install Blender on the host image to accept FBX, 3DS, X3D and USD uploads. Without it,
@@ -88,22 +98,22 @@ GLB, glTF, COLLADA, OBJ (zip with MTL and textures), KMZ, STL, PLY, OFF and 3MF 
 
 ## API types
 
-The interface's API types are generated from the backend's OpenAPI schema, so the two halves cannot
-disagree about a field. After changing a schema in `backend/app/schemas/`:
+The interface's API types are generated from the server's OpenAPI schema, so the two halves cannot
+disagree about a field. After changing a schema in `server/app/schemas/`:
 
 ```bash
-cd backend && uv run python -m app.cli openapi     # writes frontend/openapi.json
-cd ../frontend && npm run api:types                # writes src/api/schema.d.ts
+cd server && uv run python -m app.cli openapi     # writes client/openapi.json
+cd ../client && npm run api:types                # writes src/api/schema.d.ts
 ```
 
-Both files are committed. A backend test fails while `openapi.json` is behind the app, and a frontend
+Both files are committed. A server test fails while `openapi.json` is behind the app, and a client
 test checks that a new mission in the interface starts from the server's defaults.
 
 ## Tests
 
 ```bash
-cd backend && uv run pytest
-cd frontend && npm test          # the mission's flight logic
+cd server && uv run pytest
+cd client && npm test          # the mission's flight logic
 ```
 
 They use a throwaway database and skip if no PostgreSQL is reachable. The role needs
@@ -116,7 +126,7 @@ a gatehouse and bridge, a keep with corner turrets, a chapel, and a switchback r
 It is generated rather than downloaded, so it carries no licence and can be rebuilt at any time.
 
 ```bash
-cd backend && uv run --with scipy python ../scripts/make_demo_model.py ../castle.glb
+cd server && uv run --with scipy python ../scripts/make_demo_model.py ../castle.glb
 ```
 
 `scipy` is only needed here, not by the app. Without it, trimesh computes the terrain's vertex
@@ -163,7 +173,7 @@ corner, in metres and Y-up, to try missions on. Like the castle it is generated,
 licence. Roughly 40,000 triangles and under a megabyte.
 
 ```bash
-cd backend && uv run python ../scripts/make_demo_neighborhood.py ../neighborhood.glb
+cd server && uv run python ../scripts/make_demo_neighborhood.py ../neighborhood.glb
 ```
 
 Upload it as a project, place the hub on the concrete apron by the hangar and the drop in any back

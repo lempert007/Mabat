@@ -148,11 +148,11 @@ POST   /projects/{id}/mission-models        (editor, multipart) → {id}
 GET    /projects/{id}/mission-models/{id}                   → GLB, immutable
 ```
 
-## 7. Frontend
+## 7. Client
 
 Vite + React 18 + TypeScript. One component per file. Feature folders.
 
-- **API types**: generated from the backend's OpenAPI schema (`openapi.json` →
+- **API types**: generated from the server's OpenAPI schema (`openapi.json` →
   `src/api/schema.d.ts` by `openapi-typescript`); `src/types/api.ts` only gives the shapes the
   names the interface uses. Responses mark every field required, requests leave defaults out.
 
@@ -199,7 +199,7 @@ Dark, quiet, precise. Near-black surfaces, glass panels (`bg white/6, blur 20, b
 
 ## 8. Deployment
 
-`docker-compose.yml`: `db` (postgres:16), `backend` (uvicorn), `frontend` (nginx serving the static build, proxying `/api`, `client_max_body_size` raised). The storage folder is a bind mount. Images are built on a machine with internet and moved with `docker save` / `docker load`, or built on the host if it has package mirrors.
+`docker-compose.yml`: `db` (postgres:16), `server` (uvicorn), `client` (nginx serving the static build, proxying `/api`, `client_max_body_size` raised). The storage folder is a bind mount. Images are built on a machine with internet and moved with `scripts/offline-bundle.sh`, which saves the two named images and Postgres into one tar for `docker load`; `docker compose up --no-build` then runs them.
 
 ### Two kinds of status
 
@@ -237,13 +237,13 @@ Export and import live in the viewer's toolbar.
 
 ## 10. Tests
 
-`backend/tests` covers the parts where a mistake is quiet rather than loud: the quaternion maths
+`server/tests` covers the parts where a mistake is quiet rather than loud: the quaternion maths
 behind straightening a model, the export and import of points including attachment copying and
 both import modes, and who is allowed to change what. They run against a throwaway PostgreSQL
 database created for the session, and skip rather than fail when no server is reachable.
 
 ```bash
-cd backend && uv run pytest
+cd server && uv run pytest
 ```
 
 The database role needs permission to create databases: `ALTER ROLE <user> CREATEDB;`.

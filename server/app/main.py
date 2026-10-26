@@ -44,7 +44,9 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="Mabat API", version="0.1.0", lifespan=lifespan)
+# The interactive docs load their scripts from a CDN, which the offline host cannot reach. The
+# schema they show is generated into client/openapi.json by `app.cli openapi` instead.
+app = FastAPI(title="Mabat API", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origins,

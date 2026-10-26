@@ -1,5 +1,5 @@
 [project]
-name = "mabat-backend"
+name = "mabat-server"
 version = "0.1.0"
 description = "Mabat API — 3D structure showcase"
 requires-python = ">=3.12"

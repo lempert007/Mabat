@@ -2,7 +2,7 @@
 __pycache__/
 *.pyc
 .venv/
-backend/.venv/
+server/.venv/
 *.egg-info/
 .pytest_cache/
 .mypy_cache/
@@ -10,12 +10,14 @@ backend/.venv/
 
 # Node
 node_modules/
-frontend/dist/
+client/dist/
+*.tsbuildinfo
 *.local
 
 # Env & data
 .env
 storage/
+mabat-images.tar
 *.log
 
 # OS / editor

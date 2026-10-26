@@ -4,8 +4,8 @@
 Read `DESIGN.md` before changing architecture.
 
 ## Layout
-- `backend/` FastAPI app (`app/`), Alembic migrations, CLI in `app/cli.py`.
-- `frontend/` Vite + React + TypeScript. One component per file under `src/components/<feature>/`.
+- `server/` FastAPI app (`app/`), Alembic migrations, CLI in `app/cli.py`.
+- `client/` Vite + React + TypeScript. One component per file under `src/components/<feature>/`.
   The delivery mission's flight logic is in `src/lib/mission/` (pure, tested with vitest), its
   scene and panels in `src/components/mission/`.
 - `docker-compose.yml` for deployment, `.env.example` documents every setting.
@@ -15,12 +15,12 @@ Read `DESIGN.md` before changing architecture.
 - One React component per file, named export matching the file name. Feature folders, no `utils.ts` dumping ground.
 - Server data via TanStack Query hooks in `src/api/`. Viewer UI state in zustand stores under `src/store/`.
 - API types are generated, never written by hand. `src/types/api.ts` only names shapes from
-  `src/api/schema.d.ts`, which comes from `frontend/openapi.json`. After changing a backend schema,
-  run `uv run python -m app.cli openapi` in `backend`, then `npm run api:types` in `frontend`;
+  `src/api/schema.d.ts`, which comes from `client/openapi.json`. After changing a server schema,
+  run `uv run python -m app.cli openapi` in `server`, then `npm run api:types` in `client`;
   `test_openapi.py` fails until the committed schema matches the app.
 - Responses always carry every field (`json_schema_serialization_defaults_required`), so their
   `-Output` shapes have nothing optional. Requests use the `-Input` shapes.
-- Backend: routers in `app/api/`, business logic in `app/services/`, no logic in routers beyond validation and auth.
+- Server: routers in `app/api/`, business logic in `app/services/`, no logic in routers beyond validation and auth.
 - Alembic migration for every schema change. Never edit an applied migration.
 - A form that holds a draft must show whether the draft differs from what is stored, disable its
   save when it does not, and ask before discarding. Never label a drafted value as saved.
@@ -74,12 +74,12 @@ panel: it ensures the database, migrates, and starts both halves. By hand:
 
 ```
 ./scripts/ensure-db.sh
-cd backend && uv sync && uv run alembic upgrade head && uv run uvicorn app.main:app --reload
-cd frontend && npm install && npm run dev
+cd server && uv sync --extra dev && uv run alembic upgrade head && uv run uvicorn app.main:app --reload
+cd client && npm install && npm run dev
 ```
 
 `scripts/ensure-db.sh` prefers a PostgreSQL that is already running and only starts the container
 when nothing answers, so a local install is never duplicated.
 
-Before committing: `npm run lint && npm run typecheck && npm test` in `frontend`, and
-`uv run ruff check app && uv run pytest` in `backend`.
+Before committing: `npm run lint && npm run typecheck && npm test` in `client`, and
+`uv run ruff check app && uv run pytest` in `server`.

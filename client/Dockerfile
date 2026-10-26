@@ -1,4 +1,4 @@
-# Build the static bundle, then serve it with nginx which also proxies /api to the backend.
+# Build the static bundle, then serve it with nginx which also proxies /api to the server.
 FROM node:22-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./

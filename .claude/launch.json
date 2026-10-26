@@ -2,13 +2,13 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "frontend",
+      "name": "client",
       "runtimeExecutable": "node",
       "runtimeArgs": [
-        "frontend/node_modules/vite/bin/vite.js",
-        "frontend",
+        "client/node_modules/vite/bin/vite.js",
+        "client",
         "--config",
-        "frontend/vite.config.ts",
+        "client/vite.config.ts",
         "--host",
         "127.0.0.1",
         "--port",
@@ -17,7 +17,7 @@
       "port": 5173
     },
     {
-      "name": "frontend-running",
+      "name": "client-running",
       "url": "http://127.0.0.1:5173"
     }
   ]

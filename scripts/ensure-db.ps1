@@ -1,4 +1,4 @@
-# Windows counterpart of ensure-db.sh: makes sure PostgreSQL is listening before the backend
+# Windows counterpart of ensure-db.sh: makes sure PostgreSQL is listening before the server
 # tries to reach it.
 #
 # Uses whatever is already running. When nothing answers it tries, in order, a PostgreSQL

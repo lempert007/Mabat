@@ -5,7 +5,7 @@ a park in the middle, a row of apartment blocks, and a logistics hub with a conc
 the carrier to take off from. Generated rather than downloaded, so it carries no licence and can
 be rebuilt at any time. Units are metres and Y is up, so a mission over it needs no scale fix.
 
-    cd backend && uv run python ../scripts/make_demo_neighborhood.py ../storage/demo/neighborhood.glb
+    cd server && uv run python ../scripts/make_demo_neighborhood.py ../storage/demo/neighborhood.glb
 """
 
 from __future__ import annotations

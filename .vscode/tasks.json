@@ -17,7 +17,7 @@
       "label": "db: migrate",
       "type": "shell",
       "command": "uv run alembic upgrade head",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "options": { "cwd": "${workspaceFolder}/server" },
       "dependsOn": "db: up",
       "problemMatcher": [],
       "presentation": { "reveal": "silent", "panel": "dedicated" }
@@ -28,7 +28,7 @@
       "command": "uv run alembic downgrade base && uv run alembic upgrade head",
       // Windows PowerShell 5.1 has no "&&".
       "windows": { "command": "uv run alembic downgrade base; if ($?) { uv run alembic upgrade head }" },
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "options": { "cwd": "${workspaceFolder}/server" },
       "dependsOn": "db: up",
       "problemMatcher": [],
       "presentation": { "reveal": "always", "panel": "dedicated" }

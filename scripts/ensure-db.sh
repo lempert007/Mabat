@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Makes sure PostgreSQL is listening before the backend tries to reach it.
+# Makes sure PostgreSQL is listening before the server tries to reach it.
 #
 # Uses whatever is already running, so a local install (Postgres.app, a system service) is left
 # alone. Only when nothing answers does it fall back to starting the database container.

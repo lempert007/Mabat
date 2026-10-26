@@ -8,7 +8,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-mabat}
     volumes:
       - pgdata:/var/lib/postgresql/data
-    # Loopback only: the backend reaches it over the compose network, and nothing else should.
+    # Loopback only: the server reaches it over the compose network, and nothing else should.
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
@@ -17,8 +17,10 @@ services:
       timeout: 3s
       retries: 20
 
-  backend:
-    build: ./backend
+  server:
+    build: ./server
+    # Named, so images built on a connected machine can be loaded on the offline one.
+    image: mabat-server
     restart: unless-stopped
     depends_on:
       db:
@@ -37,11 +39,12 @@ services:
     volumes:
       - ${MABAT_STORAGE_ROOT:-./storage}:/data
 
-  frontend:
-    build: ./frontend
+  client:
+    build: ./client
+    image: mabat-client
     restart: unless-stopped
     depends_on:
-      - backend
+      - server
     ports:
       - "80:80"
 

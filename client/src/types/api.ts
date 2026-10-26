@@ -1,12 +1,12 @@
 /**
  * Wire types for the Mabat API, named for how the interface uses them.
  *
- * Every shape here comes from `src/api/schema.d.ts`, which is generated from the backend's
+ * Every shape here comes from `src/api/schema.d.ts`, which is generated from the server's
  * OpenAPI schema, so a field changed on the server shows up as a type error here rather than as
  * `undefined` at run time. After changing a schema on the server:
  *
- *     cd backend && uv run python -m app.cli openapi
- *     cd frontend && npm run api:types
+ *     cd server && uv run python -m app.cli openapi
+ *     cd client && npm run api:types
  *
  * Responses use the `-Output` shapes, where every field is present. Requests use the `-Input`
  * shapes, where anything with a default may be left out.
