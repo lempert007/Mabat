@@ -1,6 +1,8 @@
 """Operational commands. Run with: uv run python -m app.cli --help"""
 
 import asyncio
+import json
+from pathlib import Path
 
 import typer
 
@@ -39,6 +41,23 @@ def list_editors() -> None:
                 typer.echo(f"{user.username:20} {user.display_name:30} {user.created_at:%Y-%m-%d}")
 
     asyncio.run(run())
+
+
+# The interface's API types are generated from this file, so it is committed and kept current.
+OPENAPI_PATH = Path(__file__).resolve().parents[2] / "frontend" / "openapi.json"
+
+
+def openapi_document() -> str:
+    from app.main import app
+
+    return json.dumps(app.openapi(), indent=2, ensure_ascii=False) + "\n"
+
+
+@cli.command("openapi")
+def export_openapi() -> None:
+    """Write the API schema the interface's types are generated from."""
+    OPENAPI_PATH.write_text(openapi_document(), encoding="utf-8")
+    typer.echo(f"Wrote {OPENAPI_PATH}. Now run: cd frontend && npm run api:types")
 
 
 if __name__ == "__main__":

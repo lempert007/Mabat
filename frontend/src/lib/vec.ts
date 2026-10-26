@@ -17,6 +17,21 @@ export function poseFromNormal(position: Vec3, normal: Vec3, distance: number): 
 }
 
 /**
+ * A view down onto `point` from `elevation` radians above the horizon, on the side the camera is
+ * already on, so flying there reads as swooping in rather than swinging round.
+ */
+export function aerialPose(cameraPosition: Vec3, point: Vec3, distance: number, elevation = 0.75): CameraPose {
+  const target = toVector3(point);
+  const across = toVector3(cameraPosition).sub(target).setY(0);
+  if (across.lengthSq() < 1e-6) across.set(0, 0, 1);
+  const direction = across.normalize().multiplyScalar(Math.cos(elevation)).setY(Math.sin(elevation));
+  return {
+    position: fromVector3(target.clone().addScaledVector(direction, distance)),
+    target: fromVector3(target),
+  };
+}
+
+/**
  * A view of `point` from the direction the camera is already looking, pulled in to `distance`.
  * Keeps the current orientation so a zoom reads as moving closer, not as jumping somewhere new.
  */

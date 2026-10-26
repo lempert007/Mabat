@@ -18,6 +18,17 @@ export function formatNumber(value: number): string {
   return new Intl.NumberFormat(LOCALE).format(value);
 }
 
+/** A count of seconds as a clock: 0:07, 2:45, 12:03. */
+export function formatClock(seconds: number): string {
+  const whole = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, '0')}`;
+}
+
+/** A measurement with as many decimals as it needs to read well, and no more. */
+export function formatMeasure(value: number, decimals = 0): string {
+  return new Intl.NumberFormat(LOCALE, { maximumFractionDigits: decimals, minimumFractionDigits: decimals }).format(value);
+}
+
 export function formatDate(iso: string): string {
   return new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium' }).format(new Date(iso));
 }

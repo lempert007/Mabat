@@ -4,7 +4,7 @@ import { useViewerStore } from '@/store/viewerStore';
 import { t } from '@/i18n/he';
 
 /** Short orbit/zoom/pan hint that appears once the intro is dismissed and fades after a few seconds. */
-export function ControlsHint({ editable }: { editable: boolean }) {
+export function ControlsHint({ editable, hint = t.viewer.controlsHint }: { editable: boolean; hint?: string }) {
   const introVisible = useViewerStore((s) => s.introVisible);
   const [visible, setVisible] = useState(false);
 
@@ -25,7 +25,7 @@ export function ControlsHint({ editable }: { editable: boolean }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
         >
-          {t.viewer.controlsHint}
+          {hint}
           {editable && <span className="text-fg-4"> · {t.viewer.controlsHintEditor}</span>}
         </motion.p>
       )}

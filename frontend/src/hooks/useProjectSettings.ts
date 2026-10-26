@@ -4,7 +4,7 @@ import { queryKeys } from '@/api/queryKeys';
 import { useUpdateProject } from '@/api/projects';
 import { deepEqual } from '@/lib/deepEqual';
 import { errorMessage } from '@/lib/errorMessage';
-import { turnPoints } from '@/lib/orientation';
+import { turnMission, turnPoints } from '@/lib/orientation';
 import { toast } from '@/store/toastStore';
 import { useDebouncedCallback } from './useDebouncedCallback';
 import type { Poi, Project, ProjectSettings } from '@/types/api';
@@ -16,8 +16,8 @@ const SAVE_DELAY_MS = 400;
  * Scene settings with live preview. Every change is written to the query cache straight away so
  * the 3D view updates under the user's cursor, while the request to the server is debounced.
  *
- * Turning the model turns the cached points with it, so the markers never come away from the
- * geometry. Should the save fail, both are read back from the server.
+ * Turning the model turns the cached points and the mission's places with it, so nothing comes
+ * away from the geometry. Should the save fail, both are read back from the server.
  */
 export function useProjectSettings(project: Project) {
   const queryClient = useQueryClient();
@@ -40,14 +40,16 @@ export function useProjectSettings(project: Project) {
     SAVE_DELAY_MS,
   );
 
+  /** Takes the change itself, or a function of the latest settings for one built on them. */
   const patch = useCallback(
-    (partial: Partial<ProjectSettings>) => {
+    (change: Partial<ProjectSettings> | ((current: ProjectSettings) => Partial<ProjectSettings>)) => {
       const previous = settingsRef.current;
-      const next = { ...previous, ...partial };
+      const next = { ...previous, ...(typeof change === 'function' ? change(previous) : change) };
       if (!deepEqual(previous.modelRotation, next.modelRotation)) {
         queryClient.setQueryData<Poi[]>(queryKeys.pois(project.id), (pois) =>
           pois && turnPoints(pois, previous.modelRotation, next.modelRotation),
         );
+        if (next.mission) next.mission = turnMission(next.mission, previous.modelRotation, next.modelRotation);
       }
       settingsRef.current = next;
       queryClient.setQueryData<Project>(queryKeys.project(project.id), (current) =>

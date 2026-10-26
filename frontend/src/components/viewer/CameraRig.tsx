@@ -5,6 +5,7 @@ import type CameraControlsImpl from 'camera-controls';
 import { MathUtils, PerspectiveCamera, Vector3 } from 'three';
 import { sceneRefs } from '@/store/sceneRefs';
 import { useViewerStore } from '@/store/viewerStore';
+import { useMissionStore } from '@/store/missionStore';
 import { fromVector3 } from '@/lib/vec';
 import type { CameraPose } from '@/types/api';
 
@@ -29,6 +30,9 @@ export function CameraRig({ radius, introCamera }: CameraRigProps) {
   const setCameraApi = useViewerStore((s) => s.setCameraApi);
   const setZoomReturnPose = useViewerStore((s) => s.setZoomReturnPose);
   const setCameraDistance = useViewerStore((s) => s.setCameraDistance);
+  // While the mission's director holds the camera it moves every frame, and dropping the
+  // resolution for each of those moves would leave the whole presentation soft.
+  const directed = useMissionStore((s) => s.view === 'mission' && s.camera !== 'free');
 
   const heroPose = useCallback((): CameraPose | null => {
     const bounds = sceneRefs.bounds;
@@ -143,5 +147,5 @@ export function CameraRig({ radius, introCamera }: CameraRigProps) {
   });
 
   // `regress` lets AdaptiveDpr drop the resolution while the camera is moving.
-  return <CameraControls ref={controlsRef} makeDefault regress />;
+  return <CameraControls ref={controlsRef} makeDefault regress={!directed} />;
 }

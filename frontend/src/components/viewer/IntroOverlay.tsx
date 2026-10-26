@@ -1,12 +1,18 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Compass, Play } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Kbd } from '@/components/ui/Kbd';
 import { useViewerStore } from '@/store/viewerStore';
 import type { Project } from '@/types/api';
 import { t } from '@/i18n/he';
 
-export function IntroOverlay({ project }: { project: Project }) {
+interface IntroOverlayProps {
+  project: Project;
+  /** Present when the project has a mission to play, which then becomes the way in. */
+  onWatch?: () => void;
+}
+
+export function IntroOverlay({ project, onWatch }: IntroOverlayProps) {
   const introVisible = useViewerStore((s) => s.introVisible);
   const modelReady = useViewerStore((s) => s.modelReady);
   const dismissIntro = useViewerStore((s) => s.dismissIntro);
@@ -37,10 +43,21 @@ export function IntroOverlay({ project }: { project: Project }) {
             {project.description && (
               <p className="max-w-xl text-[17px] leading-relaxed text-fg-2 text-balance">{project.description}</p>
             )}
-            <div className="mt-2 flex items-center gap-4">
-              <Button variant="primary" size="lg" icon={<ArrowRight size={18} />} onClick={dismissIntro} className="ps-7 pe-6">
-                {t.viewer.explore}
-              </Button>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              {onWatch ? (
+                <>
+                  <Button variant="primary" size="lg" icon={<Play size={18} />} onClick={onWatch} className="ps-7 pe-6">
+                    {t.mission.watch}
+                  </Button>
+                  <Button size="lg" icon={<Compass size={18} />} onClick={dismissIntro}>
+                    {t.mission.explore}
+                  </Button>
+                </>
+              ) : (
+                <Button variant="primary" size="lg" icon={<ArrowRight size={18} />} onClick={dismissIntro} className="ps-7 pe-6">
+                  {t.viewer.explore}
+                </Button>
+              )}
               <span className="hidden sm:inline-flex items-center gap-2 text-[12px] text-fg-4">
                 <Kbd>↵</Kbd> {t.viewer.intro}
               </span>

@@ -18,6 +18,9 @@ class ApiModel(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
         from_attributes=True,
+        # A response always carries every field, defaults included, so the schema the interface's
+        # types are generated from says so, and only requests leave defaulted fields optional.
+        json_schema_serialization_defaults_required=True,
     )
 
 

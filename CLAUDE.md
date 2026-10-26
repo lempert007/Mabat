@@ -6,18 +6,33 @@ Read `DESIGN.md` before changing architecture.
 ## Layout
 - `backend/` FastAPI app (`app/`), Alembic migrations, CLI in `app/cli.py`.
 - `frontend/` Vite + React + TypeScript. One component per file under `src/components/<feature>/`.
+  The delivery mission's flight logic is in `src/lib/mission/` (pure, tested with vitest), its
+  scene and panels in `src/components/mission/`.
 - `docker-compose.yml` for deployment, `.env.example` documents every setting.
 
 ## Rules
 - No runtime network calls to the internet. Fonts, HDRI, libraries are bundled.
 - One React component per file, named export matching the file name. Feature folders, no `utils.ts` dumping ground.
 - Server data via TanStack Query hooks in `src/api/`. Viewer UI state in zustand stores under `src/store/`.
+- API types are generated, never written by hand. `src/types/api.ts` only names shapes from
+  `src/api/schema.d.ts`, which comes from `frontend/openapi.json`. After changing a backend schema,
+  run `uv run python -m app.cli openapi` in `backend`, then `npm run api:types` in `frontend`;
+  `test_openapi.py` fails until the committed schema matches the app.
+- Responses always carry every field (`json_schema_serialization_defaults_required`), so their
+  `-Output` shapes have nothing optional. Requests use the `-Input` shapes.
 - Backend: routers in `app/api/`, business logic in `app/services/`, no logic in routers beyond validation and auth.
 - Alembic migration for every schema change. Never edit an applied migration.
 - A form that holds a draft must show whether the draft differs from what is stored, disable its
   save when it does not, and ask before discarding. Never label a drafted value as saved.
 - Point coordinates are world-space. Anything that moves the model as a whole, such as
   `modelRotation`, has to move the project's points by the same amount or they detach from it.
+  A mission's places are world-space too: `turnMission` turns them in the same patch.
+- A mission is a pure function of time (`buildPlan` → `frameAt`). Nothing drawn for it keeps
+  motion of its own or accumulates state between frames; it reads `missionLive.frame`.
+- `MissionClock` runs at `useFrame` priority −1 so it publishes the frame before anything reads
+  it. Never give a frame callback a positive priority: that takes rendering away from r3f.
+- A line redrawn every frame goes through `setLinePoints`. Calling `setPositions` each frame
+  builds new GPU buffers and never frees the old ones.
 - Anything served from a URL that can change behind the scenes needs a version in the query, the
   way `modelVersion` and the thumbnail's `v` do. Otherwise a reprocessed project keeps serving
   the old file from cache.
@@ -65,5 +80,5 @@ cd frontend && npm install && npm run dev
 `scripts/ensure-db.sh` prefers a PostgreSQL that is already running and only starts the container
 when nothing answers, so a local install is never duplicated.
 
-Before committing: `npm run lint && npm run typecheck` in `frontend`, and
+Before committing: `npm run lint && npm run typecheck && npm test` in `frontend`, and
 `uv run ruff check app && uv run pytest` in `backend`.

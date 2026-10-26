@@ -4,6 +4,10 @@ A dark, board-room-ready web app for presenting a 3D model of a structure with r
 Editors upload a model, walk through it and pin points with content. Guests explore, open points and
 follow share links. Runs entirely offline.
 
+Over the same model it plays a **live delivery mission**: a carrier drone flies the route, hovers,
+lowers a delivery droid on a tether to the drop, sets the parcel down and reels it back in, told as
+a narrated show in stages with cinematic cameras and live telemetry.
+
 See [DESIGN.md](DESIGN.md) for the architecture and [CLAUDE.md](CLAUDE.md) for conventions.
 
 ## Stack
@@ -76,10 +80,24 @@ under `<storage>/projects/<project-id>/`. Back that folder up together with the 
 Optional: install Blender on the host image to accept FBX, 3DS, X3D and USD uploads. Without it,
 GLB, glTF, COLLADA, OBJ (zip with MTL and textures), KMZ, STL, PLY, OFF and 3MF are supported.
 
+## API types
+
+The interface's API types are generated from the backend's OpenAPI schema, so the two halves cannot
+disagree about a field. After changing a schema in `backend/app/schemas/`:
+
+```bash
+cd backend && uv run python -m app.cli openapi     # writes frontend/openapi.json
+cd ../frontend && npm run api:types                # writes src/api/schema.d.ts
+```
+
+Both files are committed. A backend test fails while `openapi.json` is behind the app, and a frontend
+test checks that a new mission in the interface starts from the server's defaults.
+
 ## Tests
 
 ```bash
 cd backend && uv run pytest
+cd frontend && npm test          # the mission's flight logic
 ```
 
 They use a throwaway database and skip if no PostgreSQL is reachable. The role needs
@@ -99,6 +117,44 @@ cd backend && uv run --with scipy python ../scripts/make_demo_model.py ../castle
 normals in a pure-Python loop and the script runs for many minutes instead of seconds.
 
 Upload the result as a project. Roughly 200,000 triangles and 5 MB.
+
+## Delivery missions
+
+Open a project, press **עריכת המשימה** in the toolbar and choose where the parcel lands by clicking the
+model. That one click is a whole mission: it starts playing straight away, with the carrier arriving
+from beyond the model. Everything else is optional and changes the scene as you move it:
+
+| Tab | What it sets |
+| --- | --- |
+| מסלול | The drop, a hover point if the carrier should hold off to one side, a hub to take off from and land on, waypoints in order, and the model's real width if its units are not metres. Each place has a button that flies the camera to it |
+| טיסה | Cruise altitude and speed, climb rate, hover altitude, tether length (with a check that it reaches), winch speed, release height, time at the drop |
+| כלים | The carrier, the droid and the parcel: their names in the show, real sizes, colours, and your own models (any format the uploads accept; turn them nose first if they fly sideways) |
+| שלבים | Each stage's title, caption and camera, with a button to watch just that stage |
+
+Viewers get **צפייה במשימה** on the intro. The player along the bottom has the stages as chapters:
+click to jump, drag to scrub. The camera is cinematic by default; dragging takes over while it keeps
+following the action; panning with the right button, or editing, frees it entirely, as does **חופשי**. For presenting, **עצירה בסוף כל שלב** pauses at
+the end of each stage until you go on, **חזרה על השלב** loops one stage, and the speed button runs
+the show at ½×, 1×, 2× or 4×.
+
+| Key | In a mission |
+| --- | --- |
+| `Space` | Play / pause |
+| `→` `←` | Next / previous stage (presenting: plays the stage waiting to start) |
+| `Esc` | Stop placing on the model |
+
+### The neighbourhood demo
+
+`scripts/make_demo_neighborhood.py` builds a suburban neighbourhood with a logistics hub at one
+corner, in metres and Y-up, to try missions on. Like the castle it is generated, so it carries no
+licence. Roughly 40,000 triangles and under a megabyte.
+
+```bash
+cd backend && uv run python ../scripts/make_demo_neighborhood.py ../neighborhood.glb
+```
+
+Upload it as a project, place the hub on the concrete apron by the hangar and the drop in any back
+garden.
 
 ## If a model arrives the wrong way up
 

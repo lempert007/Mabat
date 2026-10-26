@@ -11,11 +11,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import Session, require_editor, require_session
 from app.db.session import get_db
 from app.models import Project
-from app.schemas.project import ProjectOut, ProjectSettings, ProjectUpdate
+from app.schemas.project import (
+    ModelStats,
+    ProjectOut,
+    ProjectSettings,
+    ProjectUpdate,
+    VehicleVersions,
+)
 from app.schemas.transfer import ImportRequest, ImportResult, PointsDocument
 from app.services import projects as project_service
 from app.services import storage
 from app.services import transfer as transfer_service
+from app.services import vehicles as vehicle_service
 from app.services.conversion import NEEDS_EXPORT, SUPPORTED_UPLOAD_FORMATS
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -36,8 +43,9 @@ def to_out(project: Project, poi_count: int) -> ProjectOut:
         has_model=project.model_path is not None,
         model_version=project_service.model_version(project),
         has_thumbnail=project.thumbnail_path is not None,
-        model_stats=project.model_stats,
+        model_stats=ModelStats.model_validate(project.model_stats),
         settings=ProjectSettings.model_validate(project.settings),
+        vehicles=VehicleVersions(**vehicle_service.versions(project.id)),
         poi_count=poi_count,
         created_by=project.created_by,
         created_at=project.created_at,

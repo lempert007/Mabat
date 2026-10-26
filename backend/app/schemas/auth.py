@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from pydantic import Field
@@ -19,7 +20,7 @@ class UserOut(ApiModel):
 
 
 class SessionOut(ApiModel):
-    role: str
+    role: Literal["editor", "guest"]
     user: UserOut | None = None
 
 

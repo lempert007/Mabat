@@ -7,6 +7,7 @@ import {
   Home,
   List,
   Minimize,
+  Route,
   Settings2,
   Share2,
 } from 'lucide-react';
@@ -22,6 +23,8 @@ interface ViewerHudProps {
   fullscreen: { active: boolean; toggle: () => void; supported: boolean };
   onShare: () => void;
   onSettings: () => void;
+  onMission: () => void;
+  missionOpen: boolean;
   onExportPoints: () => void;
   onImportPoints: () => void;
   exportingPoints: boolean;
@@ -35,6 +38,8 @@ export function ViewerHud({
   fullscreen,
   onShare,
   onSettings,
+  onMission,
+  missionOpen,
   onExportPoints,
   onImportPoints,
   exportingPoints,
@@ -76,15 +81,21 @@ export function ViewerHud({
           </IconButton>
           {editable && (
             <>
-              <IconButton
-                label={t.settings.exportPoints}
-                disabled={pointCount === 0 || exportingPoints}
-                onClick={onExportPoints}
-              >
-                <FileDown size={18} />
-              </IconButton>
-              <IconButton label={t.settings.importPoints} onClick={onImportPoints}>
-                <FileUp size={18} />
+              {/* Moving points between models is desk work; on a phone the toolbar needs the room. */}
+              <span className="hidden md:contents">
+                <IconButton
+                  label={t.settings.exportPoints}
+                  disabled={pointCount === 0 || exportingPoints}
+                  onClick={onExportPoints}
+                >
+                  <FileDown size={18} />
+                </IconButton>
+                <IconButton label={t.settings.importPoints} onClick={onImportPoints}>
+                  <FileUp size={18} />
+                </IconButton>
+              </span>
+              <IconButton label={t.mission.edit} active={missionOpen} onClick={onMission}>
+                <Route size={18} />
               </IconButton>
               <IconButton label={t.viewer.settings} onClick={onSettings}>
                 <Settings2 size={18} />

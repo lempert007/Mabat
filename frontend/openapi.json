@@ -1,0 +1,4512 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mabat API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/guest": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Join As Guest",
+        "operationId": "join_as_guest_api_auth_guest_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_auth_logout_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "List Users",
+        "operationId": "list_users_api_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Api Users Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Create User",
+        "operationId": "create_user_api_users_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{user_id}": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Delete User",
+        "operationId": "delete_user_api_users__user_id__delete",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "List Projects",
+        "operationId": "list_projects_api_projects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Projects Api Projects Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Create Project",
+        "operationId": "create_project_api_projects_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_project_api_projects_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get Project",
+        "operationId": "get_project_api_projects__project_id__get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Update Project",
+        "operationId": "update_project_api_projects__project_id__patch",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Delete Project",
+        "operationId": "delete_project_api_projects__project_id__delete",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/reprocess": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Reprocess Project",
+        "operationId": "reprocess_project_api_projects__project_id__reprocess_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/model": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get Model",
+        "operationId": "get_model_api_projects__project_id__model_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/thumbnail": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Get Thumbnail",
+        "operationId": "get_thumbnail_api_projects__project_id__thumbnail_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Set Thumbnail",
+        "operationId": "set_thumbnail_api_projects__project_id__thumbnail_put",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_set_thumbnail_api_projects__project_id__thumbnail_put"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/points/export": {
+      "get": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Export Points",
+        "description": "Every point in the project as a portable document, offered as a file download.",
+        "operationId": "export_points_api_projects__project_id__points_export_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PointsDocument-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/points/import": {
+      "post": {
+        "tags": [
+          "projects"
+        ],
+        "summary": "Import Points",
+        "description": "Add points from an exported document, bringing their images and files along.",
+        "operationId": "import_points_api_projects__project_id__points_import_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/vehicles/{slot}": {
+      "put": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Upload Vehicle",
+        "operationId": "upload_vehicle_api_projects__project_id__vehicles__slot__put",
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "carrier",
+                "droid",
+                "parcel"
+              ],
+              "type": "string",
+              "title": "Slot"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_vehicle_api_projects__project_id__vehicles__slot__put"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Get Vehicle",
+        "operationId": "get_vehicle_api_projects__project_id__vehicles__slot__get",
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "carrier",
+                "droid",
+                "parcel"
+              ],
+              "type": "string",
+              "title": "Slot"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "vehicles"
+        ],
+        "summary": "Remove Vehicle",
+        "operationId": "remove_vehicle_api_projects__project_id__vehicles__slot__delete",
+        "parameters": [
+          {
+            "name": "slot",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "carrier",
+                "droid",
+                "parcel"
+              ],
+              "type": "string",
+              "title": "Slot"
+            }
+          },
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/categories": {
+      "get": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "List Categories",
+        "operationId": "list_categories_api_projects__project_id__categories_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CategoryOut"
+                  },
+                  "title": "Response List Categories Api Projects  Project Id  Categories Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Create Category",
+        "operationId": "create_category_api_projects__project_id__categories_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories/{category_id}": {
+      "patch": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Update Category",
+        "operationId": "update_category_api_categories__category_id__patch",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Category Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Delete Category",
+        "operationId": "delete_category_api_categories__category_id__delete",
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Category Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/pois": {
+      "get": {
+        "tags": [
+          "pois"
+        ],
+        "summary": "List Pois",
+        "operationId": "list_pois_api_projects__project_id__pois_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PoiOut"
+                  },
+                  "title": "Response List Pois Api Projects  Project Id  Pois Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "pois"
+        ],
+        "summary": "Create Poi",
+        "operationId": "create_poi_api_projects__project_id__pois_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoiCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoiOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/pois/order": {
+      "put": {
+        "tags": [
+          "pois"
+        ],
+        "summary": "Reorder Pois",
+        "operationId": "reorder_pois_api_projects__project_id__pois_order_put",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoiOrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PoiOut"
+                  },
+                  "title": "Response Reorder Pois Api Projects  Project Id  Pois Order Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/pois/{poi_id}": {
+      "get": {
+        "tags": [
+          "pois"
+        ],
+        "summary": "Get Poi",
+        "operationId": "get_poi_api_pois__poi_id__get",
+        "parameters": [
+          {
+            "name": "poi_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Poi Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoiOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "pois"
+        ],
+        "summary": "Update Poi",
+        "operationId": "update_poi_api_pois__poi_id__patch",
+        "parameters": [
+          {
+            "name": "poi_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Poi Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoiUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoiOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "pois"
+        ],
+        "summary": "Delete Poi",
+        "operationId": "delete_poi_api_pois__poi_id__delete",
+        "parameters": [
+          {
+            "name": "poi_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Poi Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{project_id}/attachments": {
+      "get": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "List Attachments",
+        "operationId": "list_attachments_api_projects__project_id__attachments_get",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentOut"
+                  },
+                  "title": "Response List Attachments Api Projects  Project Id  Attachments Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Upload Attachment",
+        "operationId": "upload_attachment_api_projects__project_id__attachments_post",
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_attachment_api_projects__project_id__attachments_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachment_id}/file": {
+      "get": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Get File",
+        "operationId": "get_file_api_attachments__attachment_id__file_get",
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attachment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachment_id}/thumb": {
+      "get": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Get Thumb",
+        "operationId": "get_thumb_api_attachments__attachment_id__thumb_get",
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attachment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/attachments/{attachment_id}": {
+      "delete": {
+        "tags": [
+          "attachments"
+        ],
+        "summary": "Delete Attachment",
+        "operationId": "delete_attachment_api_attachments__attachment_id__delete",
+        "parameters": [
+          {
+            "name": "attachment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attachment Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Health",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Api Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttachmentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Projectid"
+          },
+          "poiId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poiid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "image",
+              "document"
+            ],
+            "title": "Kind"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "hasThumb": {
+            "type": "boolean",
+            "title": "Hasthumb"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projectId",
+          "poiId",
+          "kind",
+          "filename",
+          "mime",
+          "size",
+          "width",
+          "height",
+          "hasThumb",
+          "createdAt"
+        ],
+        "title": "AttachmentOut"
+      },
+      "Body_create_project_api_projects_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "file"
+        ],
+        "title": "Body_create_project_api_projects_post"
+      },
+      "Body_set_thumbnail_api_projects__project_id__thumbnail_put": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_set_thumbnail_api_projects__project_id__thumbnail_put"
+      },
+      "Body_upload_attachment_api_projects__project_id__attachments_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "poi_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Poi Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_attachment_api_projects__project_id__attachments_post"
+      },
+      "Body_upload_vehicle_api_projects__project_id__vehicles__slot__put": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_vehicle_api_projects__project_id__vehicles__slot__put"
+      },
+      "CameraPose": {
+        "properties": {
+          "position": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "target": {
+            "$ref": "#/components/schemas/Vec3"
+          }
+        },
+        "type": "object",
+        "required": [
+          "position",
+          "target"
+        ],
+        "title": "CameraPose"
+      },
+      "CategoryCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "color"
+        ],
+        "title": "CategoryCreate"
+      },
+      "CategoryOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Projectid"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "title": "Sortorder"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projectId",
+          "name",
+          "color",
+          "sortOrder"
+        ],
+        "title": "CategoryOut"
+      },
+      "CategoryUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "sortOrder": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sortorder"
+          }
+        },
+        "type": "object",
+        "title": "CategoryUpdate"
+      },
+      "CreateUserRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 2,
+            "pattern": "^[a-zA-Z0-9_.-]+$",
+            "title": "Username"
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Displayname"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 6,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "displayName",
+          "password"
+        ],
+        "title": "CreateUserRequest"
+      },
+      "DocumentItem-Input": {
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "title": "Attachmentid"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "attachmentId"
+        ],
+        "title": "DocumentItem"
+      },
+      "DocumentItem-Output": {
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "title": "Attachmentid"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "attachmentId",
+          "title"
+        ],
+        "title": "DocumentItem"
+      },
+      "DocumentsBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "documents",
+            "title": "Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentItem-Input"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "DocumentsBlock"
+      },
+      "DocumentsBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "documents",
+            "title": "Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentItem-Output"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "items"
+        ],
+        "title": "DocumentsBlock"
+      },
+      "ExportedCategory": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "color"
+        ],
+        "title": "ExportedCategory"
+      },
+      "ExportedPoint-Input": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Identifier"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "categoryName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryname"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "normal": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blocks": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HeadingBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/TextBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/SpecsBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/TableBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/ImagesBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/DocumentsBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/SectionBlock-Input"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "documents": "#/components/schemas/DocumentsBlock-Input",
+                  "heading": "#/components/schemas/HeadingBlock-Input",
+                  "images": "#/components/schemas/ImagesBlock-Input",
+                  "link": "#/components/schemas/LinkBlock-Input",
+                  "section": "#/components/schemas/SectionBlock-Input",
+                  "specs": "#/components/schemas/SpecsBlock-Input",
+                  "table": "#/components/schemas/TableBlock-Input",
+                  "text": "#/components/schemas/TextBlock-Input"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Blocks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "identifier",
+          "title",
+          "position",
+          "normal"
+        ],
+        "title": "ExportedPoint"
+      },
+      "ExportedPoint-Output": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Identifier"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "categoryName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryname"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "normal": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blocks": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HeadingBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/TextBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/SpecsBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/TableBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/ImagesBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/DocumentsBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/SectionBlock-Output"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "documents": "#/components/schemas/DocumentsBlock-Output",
+                  "heading": "#/components/schemas/HeadingBlock-Output",
+                  "images": "#/components/schemas/ImagesBlock-Output",
+                  "link": "#/components/schemas/LinkBlock-Output",
+                  "section": "#/components/schemas/SectionBlock-Output",
+                  "specs": "#/components/schemas/SpecsBlock-Output",
+                  "table": "#/components/schemas/TableBlock-Output",
+                  "text": "#/components/schemas/TextBlock-Output"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Blocks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "identifier",
+          "title",
+          "summary",
+          "categoryName",
+          "position",
+          "normal",
+          "camera",
+          "blocks"
+        ],
+        "title": "ExportedPoint"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeadingBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "heading",
+            "title": "Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "HeadingBlock"
+      },
+      "HeadingBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "heading",
+            "title": "Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "text"
+        ],
+        "title": "HeadingBlock"
+      },
+      "ImageItem-Input": {
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "title": "Attachmentid"
+          },
+          "caption": {
+            "type": "string",
+            "title": "Caption",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "attachmentId"
+        ],
+        "title": "ImageItem"
+      },
+      "ImageItem-Output": {
+        "properties": {
+          "attachmentId": {
+            "type": "string",
+            "title": "Attachmentid"
+          },
+          "caption": {
+            "type": "string",
+            "title": "Caption",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "attachmentId",
+          "caption"
+        ],
+        "title": "ImageItem"
+      },
+      "ImagesBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "images",
+            "title": "Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImageItem-Input"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "ImagesBlock"
+      },
+      "ImagesBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "images",
+            "title": "Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ImageItem-Output"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "items"
+        ],
+        "title": "ImagesBlock"
+      },
+      "ImportRequest": {
+        "properties": {
+          "document": {
+            "$ref": "#/components/schemas/PointsDocument-Input"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "append",
+              "replace"
+            ],
+            "title": "Mode",
+            "default": "append"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document"
+        ],
+        "title": "ImportRequest"
+      },
+      "ImportResult": {
+        "properties": {
+          "pointsCreated": {
+            "type": "integer",
+            "title": "Pointscreated"
+          },
+          "categoriesCreated": {
+            "type": "integer",
+            "title": "Categoriescreated"
+          },
+          "attachmentsCopied": {
+            "type": "integer",
+            "title": "Attachmentscopied"
+          },
+          "attachmentsMissing": {
+            "type": "integer",
+            "title": "Attachmentsmissing",
+            "description": "Referenced files that no longer exist, whose entries were dropped.",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "pointsCreated",
+          "categoriesCreated",
+          "attachmentsCopied",
+          "attachmentsMissing"
+        ],
+        "title": "ImportResult"
+      },
+      "LinkBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "link",
+            "title": "Type"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "default": ""
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "LinkBlock"
+      },
+      "LinkBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "link",
+            "title": "Type"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "default": ""
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "url",
+          "label"
+        ],
+        "title": "LinkBlock"
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "Mission-Input": {
+        "properties": {
+          "unitsPerMeter": {
+            "type": "number",
+            "maximum": 1000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Unitspermeter",
+            "default": 1.0
+          },
+          "hub": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "waypoints": {
+            "items": {
+              "$ref": "#/components/schemas/Vec3"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Waypoints"
+          },
+          "drop": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cruiseAltitude": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 5.0,
+            "title": "Cruisealtitude",
+            "default": 90
+          },
+          "cruiseSpeed": {
+            "type": "number",
+            "maximum": 120.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Cruisespeed",
+            "default": 25
+          },
+          "climbRate": {
+            "type": "number",
+            "maximum": 30.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Climbrate",
+            "default": 5
+          },
+          "hoverAltitude": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 3.0,
+            "title": "Hoveraltitude",
+            "default": 70
+          },
+          "tetherLength": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Tetherlength",
+            "default": 80
+          },
+          "winchSpeed": {
+            "type": "number",
+            "maximum": 20.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Winchspeed",
+            "default": 3
+          },
+          "releaseHeight": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Releaseheight",
+            "default": 1.5
+          },
+          "dwell": {
+            "type": "number",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Dwell",
+            "default": 5
+          },
+          "carrier": {
+            "$ref": "#/components/schemas/Vehicle-Input"
+          },
+          "droid": {
+            "$ref": "#/components/schemas/Vehicle-Input"
+          },
+          "parcel": {
+            "$ref": "#/components/schemas/Vehicle-Input"
+          },
+          "stages": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StageText-Input"
+            },
+            "propertyNames": {
+              "enum": [
+                "takeoff",
+                "cruise",
+                "approach",
+                "lower",
+                "deliver",
+                "raise",
+                "return",
+                "land"
+              ]
+            },
+            "type": "object",
+            "title": "Stages"
+          }
+        },
+        "type": "object",
+        "title": "Mission"
+      },
+      "Mission-Output": {
+        "properties": {
+          "unitsPerMeter": {
+            "type": "number",
+            "maximum": 1000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Unitspermeter",
+            "default": 1.0
+          },
+          "hub": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "waypoints": {
+            "items": {
+              "$ref": "#/components/schemas/Vec3"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Waypoints"
+          },
+          "drop": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cruiseAltitude": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 5.0,
+            "title": "Cruisealtitude",
+            "default": 90
+          },
+          "cruiseSpeed": {
+            "type": "number",
+            "maximum": 120.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Cruisespeed",
+            "default": 25
+          },
+          "climbRate": {
+            "type": "number",
+            "maximum": 30.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Climbrate",
+            "default": 5
+          },
+          "hoverAltitude": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 3.0,
+            "title": "Hoveraltitude",
+            "default": 70
+          },
+          "tetherLength": {
+            "type": "number",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Tetherlength",
+            "default": 80
+          },
+          "winchSpeed": {
+            "type": "number",
+            "maximum": 20.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Winchspeed",
+            "default": 3
+          },
+          "releaseHeight": {
+            "type": "number",
+            "maximum": 50.0,
+            "minimum": 0.0,
+            "title": "Releaseheight",
+            "default": 1.5
+          },
+          "dwell": {
+            "type": "number",
+            "maximum": 120.0,
+            "minimum": 0.0,
+            "title": "Dwell",
+            "default": 5
+          },
+          "carrier": {
+            "$ref": "#/components/schemas/Vehicle-Output"
+          },
+          "droid": {
+            "$ref": "#/components/schemas/Vehicle-Output"
+          },
+          "parcel": {
+            "$ref": "#/components/schemas/Vehicle-Output"
+          },
+          "stages": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StageText-Output"
+            },
+            "propertyNames": {
+              "enum": [
+                "takeoff",
+                "cruise",
+                "approach",
+                "lower",
+                "deliver",
+                "raise",
+                "return",
+                "land"
+              ]
+            },
+            "type": "object",
+            "title": "Stages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unitsPerMeter",
+          "hub",
+          "waypoints",
+          "drop",
+          "hover",
+          "cruiseAltitude",
+          "cruiseSpeed",
+          "climbRate",
+          "hoverAltitude",
+          "tetherLength",
+          "winchSpeed",
+          "releaseHeight",
+          "dwell",
+          "carrier",
+          "droid",
+          "parcel",
+          "stages"
+        ],
+        "title": "Mission"
+      },
+      "ModelStats": {
+        "properties": {
+          "triangles": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Triangles"
+          },
+          "vertices": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vertices"
+          },
+          "boundsMin": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 3,
+                "minItems": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundsmin"
+          },
+          "boundsMax": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 3,
+                "minItems": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundsmax"
+          },
+          "extents": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 3,
+                "minItems": 3
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extents"
+          }
+        },
+        "type": "object",
+        "required": [
+          "triangles",
+          "vertices",
+          "boundsMin",
+          "boundsMax",
+          "extents"
+        ],
+        "title": "ModelStats"
+      },
+      "PoiCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Title",
+            "default": "נקודה חדשה"
+          },
+          "identifier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identifier"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryid"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "normal": {
+            "$ref": "#/components/schemas/Vec3",
+            "default": {
+              "x": 0.0,
+              "y": 1.0,
+              "z": 0.0
+            }
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blocks": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HeadingBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/TextBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/SpecsBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/TableBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/ImagesBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/DocumentsBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/SectionBlock-Input"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "documents": "#/components/schemas/DocumentsBlock-Input",
+                  "heading": "#/components/schemas/HeadingBlock-Input",
+                  "images": "#/components/schemas/ImagesBlock-Input",
+                  "link": "#/components/schemas/LinkBlock-Input",
+                  "section": "#/components/schemas/SectionBlock-Input",
+                  "specs": "#/components/schemas/SpecsBlock-Input",
+                  "table": "#/components/schemas/TableBlock-Input",
+                  "text": "#/components/schemas/TextBlock-Input"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Blocks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "position"
+        ],
+        "title": "PoiCreate"
+      },
+      "PoiOrderRequest": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "title": "PoiOrderRequest"
+      },
+      "PoiOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Projectid"
+          },
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryid"
+          },
+          "identifier": {
+            "type": "string",
+            "title": "Identifier"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "position": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "normal": {
+            "$ref": "#/components/schemas/Vec3"
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "blocks": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HeadingBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/TextBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/SpecsBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/TableBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/ImagesBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/DocumentsBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/SectionBlock-Output"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "documents": "#/components/schemas/DocumentsBlock-Output",
+                  "heading": "#/components/schemas/HeadingBlock-Output",
+                  "images": "#/components/schemas/ImagesBlock-Output",
+                  "link": "#/components/schemas/LinkBlock-Output",
+                  "section": "#/components/schemas/SectionBlock-Output",
+                  "specs": "#/components/schemas/SpecsBlock-Output",
+                  "table": "#/components/schemas/TableBlock-Output",
+                  "text": "#/components/schemas/TextBlock-Output"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Blocks"
+          },
+          "sortOrder": {
+            "type": "integer",
+            "title": "Sortorder"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdby"
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedby"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "projectId",
+          "categoryId",
+          "identifier",
+          "title",
+          "summary",
+          "position",
+          "normal",
+          "camera",
+          "blocks",
+          "sortOrder",
+          "createdBy",
+          "updatedBy",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "PoiOut"
+      },
+      "PoiUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "identifier": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Identifier"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "categoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryid"
+          },
+          "clearCategory": {
+            "type": "boolean",
+            "title": "Clearcategory",
+            "default": false
+          },
+          "position": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "normal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Vec3"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "camera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "clearCamera": {
+            "type": "boolean",
+            "title": "Clearcamera",
+            "default": false
+          },
+          "blocks": {
+            "anyOf": [
+              {
+                "items": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/HeadingBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TextBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SpecsBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TableBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ImagesBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DocumentsBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/LinkBlock-Input"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SectionBlock-Input"
+                    }
+                  ],
+                  "discriminator": {
+                    "propertyName": "type",
+                    "mapping": {
+                      "documents": "#/components/schemas/DocumentsBlock-Input",
+                      "heading": "#/components/schemas/HeadingBlock-Input",
+                      "images": "#/components/schemas/ImagesBlock-Input",
+                      "link": "#/components/schemas/LinkBlock-Input",
+                      "section": "#/components/schemas/SectionBlock-Input",
+                      "specs": "#/components/schemas/SpecsBlock-Input",
+                      "table": "#/components/schemas/TableBlock-Input",
+                      "text": "#/components/schemas/TextBlock-Input"
+                    }
+                  }
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Blocks"
+          }
+        },
+        "type": "object",
+        "title": "PoiUpdate"
+      },
+      "PointsDocument-Input": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "const": "mabat.points",
+            "title": "Format",
+            "default": "mabat.points"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Exportedat"
+          },
+          "sourceProjectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceprojectid"
+          },
+          "sourceProjectName": {
+            "type": "string",
+            "title": "Sourceprojectname",
+            "default": ""
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedCategory"
+            },
+            "type": "array",
+            "title": "Categories",
+            "default": []
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedPoint-Input"
+            },
+            "type": "array",
+            "title": "Points",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "exportedAt"
+        ],
+        "title": "PointsDocument",
+        "description": "The file produced by export and accepted by import."
+      },
+      "PointsDocument-Output": {
+        "properties": {
+          "format": {
+            "type": "string",
+            "const": "mabat.points",
+            "title": "Format",
+            "default": "mabat.points"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version",
+            "default": 1
+          },
+          "exportedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Exportedat"
+          },
+          "sourceProjectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourceprojectid"
+          },
+          "sourceProjectName": {
+            "type": "string",
+            "title": "Sourceprojectname",
+            "default": ""
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedCategory"
+            },
+            "type": "array",
+            "title": "Categories",
+            "default": []
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedPoint-Output"
+            },
+            "type": "array",
+            "title": "Points",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "format",
+          "version",
+          "exportedAt",
+          "sourceProjectId",
+          "sourceProjectName",
+          "categories",
+          "points"
+        ],
+        "title": "PointsDocument",
+        "description": "The file produced by export and accepted by import."
+      },
+      "ProjectOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "uploaded",
+              "processing",
+              "ready",
+              "failed"
+            ],
+            "title": "Status"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "ready"
+            ],
+            "title": "Stage"
+          },
+          "errorMessage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errormessage"
+          },
+          "sourceFilename": {
+            "type": "string",
+            "title": "Sourcefilename"
+          },
+          "sourceFormat": {
+            "type": "string",
+            "title": "Sourceformat"
+          },
+          "hasModel": {
+            "type": "boolean",
+            "title": "Hasmodel"
+          },
+          "modelVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelversion"
+          },
+          "hasThumbnail": {
+            "type": "boolean",
+            "title": "Hasthumbnail"
+          },
+          "modelStats": {
+            "$ref": "#/components/schemas/ModelStats"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/ProjectSettings-Output"
+          },
+          "vehicles": {
+            "$ref": "#/components/schemas/VehicleVersions"
+          },
+          "poiCount": {
+            "type": "integer",
+            "title": "Poicount"
+          },
+          "createdBy": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Createdby"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "status",
+          "stage",
+          "errorMessage",
+          "sourceFilename",
+          "sourceFormat",
+          "hasModel",
+          "modelVersion",
+          "hasThumbnail",
+          "modelStats",
+          "settings",
+          "vehicles",
+          "poiCount",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "ProjectOut"
+      },
+      "ProjectSettings-Input": {
+        "properties": {
+          "modelRotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quaternion-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "introCamera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "studio",
+              "night",
+              "dawn"
+            ],
+            "title": "Environment",
+            "default": "studio"
+          },
+          "showGrid": {
+            "type": "boolean",
+            "title": "Showgrid",
+            "default": false
+          },
+          "mission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Mission-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "ProjectSettings"
+      },
+      "ProjectSettings-Output": {
+        "properties": {
+          "modelRotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quaternion-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "introCamera": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CameraPose"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "environment": {
+            "type": "string",
+            "enum": [
+              "studio",
+              "night",
+              "dawn"
+            ],
+            "title": "Environment",
+            "default": "studio"
+          },
+          "showGrid": {
+            "type": "boolean",
+            "title": "Showgrid",
+            "default": false
+          },
+          "mission": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Mission-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "modelRotation",
+          "introCamera",
+          "environment",
+          "showGrid",
+          "mission"
+        ],
+        "title": "ProjectSettings"
+      },
+      "ProjectUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "settings": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectSettings-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "ready"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          }
+        },
+        "type": "object",
+        "title": "ProjectUpdate"
+      },
+      "Quaternion-Input": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X",
+            "default": 0.0
+          },
+          "y": {
+            "type": "number",
+            "title": "Y",
+            "default": 0.0
+          },
+          "z": {
+            "type": "number",
+            "title": "Z",
+            "default": 0.0
+          },
+          "w": {
+            "type": "number",
+            "title": "W",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "title": "Quaternion",
+        "description": "A rotation. The identity is (0, 0, 0, 1)."
+      },
+      "Quaternion-Output": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X",
+            "default": 0.0
+          },
+          "y": {
+            "type": "number",
+            "title": "Y",
+            "default": 0.0
+          },
+          "z": {
+            "type": "number",
+            "title": "Z",
+            "default": 0.0
+          },
+          "w": {
+            "type": "number",
+            "title": "W",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "z",
+          "w"
+        ],
+        "title": "Quaternion",
+        "description": "A rotation. The identity is (0, 0, 0, 1)."
+      },
+      "SectionBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "section",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "defaultOpen": {
+            "type": "boolean",
+            "title": "Defaultopen",
+            "default": true
+          },
+          "blocks": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HeadingBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/TextBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/SpecsBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/TableBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/ImagesBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/DocumentsBlock-Input"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkBlock-Input"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "documents": "#/components/schemas/DocumentsBlock-Input",
+                  "heading": "#/components/schemas/HeadingBlock-Input",
+                  "images": "#/components/schemas/ImagesBlock-Input",
+                  "link": "#/components/schemas/LinkBlock-Input",
+                  "specs": "#/components/schemas/SpecsBlock-Input",
+                  "table": "#/components/schemas/TableBlock-Input",
+                  "text": "#/components/schemas/TextBlock-Input"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Blocks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "SectionBlock",
+        "description": "A named, collapsible group of content blocks. Sections never nest."
+      },
+      "SectionBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "section",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "defaultOpen": {
+            "type": "boolean",
+            "title": "Defaultopen",
+            "default": true
+          },
+          "blocks": {
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/HeadingBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/TextBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/SpecsBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/TableBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/ImagesBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/DocumentsBlock-Output"
+                },
+                {
+                  "$ref": "#/components/schemas/LinkBlock-Output"
+                }
+              ],
+              "discriminator": {
+                "propertyName": "type",
+                "mapping": {
+                  "documents": "#/components/schemas/DocumentsBlock-Output",
+                  "heading": "#/components/schemas/HeadingBlock-Output",
+                  "images": "#/components/schemas/ImagesBlock-Output",
+                  "link": "#/components/schemas/LinkBlock-Output",
+                  "specs": "#/components/schemas/SpecsBlock-Output",
+                  "table": "#/components/schemas/TableBlock-Output",
+                  "text": "#/components/schemas/TextBlock-Output"
+                }
+              }
+            },
+            "type": "array",
+            "title": "Blocks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "title",
+          "defaultOpen",
+          "blocks"
+        ],
+        "title": "SectionBlock",
+        "description": "A named, collapsible group of content blocks. Sections never nest."
+      },
+      "SessionOut": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "editor",
+              "guest"
+            ],
+            "title": "Role"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "user"
+        ],
+        "title": "SessionOut"
+      },
+      "SpecItem-Input": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "SpecItem"
+      },
+      "SpecItem-Output": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "SpecItem"
+      },
+      "SpecsBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "specs",
+            "title": "Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SpecItem-Input"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "SpecsBlock"
+      },
+      "SpecsBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "specs",
+            "title": "Type"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SpecItem-Output"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "items"
+        ],
+        "title": "SpecsBlock"
+      },
+      "StageText-Input": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Title",
+            "default": ""
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Caption",
+            "default": ""
+          },
+          "shot": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "chase",
+                  "orbit",
+                  "wide",
+                  "ground",
+                  "top",
+                  "side",
+                  "droid"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shot"
+          }
+        },
+        "type": "object",
+        "title": "StageText"
+      },
+      "StageText-Output": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Title",
+            "default": ""
+          },
+          "caption": {
+            "type": "string",
+            "maxLength": 600,
+            "title": "Caption",
+            "default": ""
+          },
+          "shot": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "chase",
+                  "orbit",
+                  "wide",
+                  "ground",
+                  "top",
+                  "side",
+                  "droid"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Shot"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "caption",
+          "shot"
+        ],
+        "title": "StageText"
+      },
+      "TableBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "table",
+            "title": "Type"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns",
+            "default": []
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Rows",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "TableBlock"
+      },
+      "TableBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "table",
+            "title": "Type"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns",
+            "default": []
+          },
+          "rows": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Rows",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "columns",
+          "rows"
+        ],
+        "title": "TableBlock"
+      },
+      "TextBlock-Input": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type"
+          },
+          "markdown": {
+            "type": "string",
+            "title": "Markdown",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type"
+        ],
+        "title": "TextBlock"
+      },
+      "TextBlock-Output": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "const": "text",
+            "title": "Type"
+          },
+          "markdown": {
+            "type": "string",
+            "title": "Markdown",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "markdown"
+        ],
+        "title": "TextBlock"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "displayName": {
+            "type": "string",
+            "title": "Displayname"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "displayName",
+          "createdAt"
+        ],
+        "title": "UserOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Vec3": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "z": {
+            "type": "number",
+            "title": "Z"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "z"
+        ],
+        "title": "Vec3"
+      },
+      "Vehicle-Input": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Name",
+            "default": ""
+          },
+          "size": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Size"
+          },
+          "rotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quaternion-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color",
+            "default": "#5b9cff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "size"
+        ],
+        "title": "Vehicle"
+      },
+      "Vehicle-Output": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 60,
+            "title": "Name",
+            "default": ""
+          },
+          "size": {
+            "type": "number",
+            "maximum": 100.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Size"
+          },
+          "rotation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Quaternion-Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color",
+            "default": "#5b9cff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "size",
+          "rotation",
+          "color"
+        ],
+        "title": "Vehicle"
+      },
+      "VehicleVersions": {
+        "properties": {
+          "carrier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carrier"
+          },
+          "droid": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Droid"
+          },
+          "parcel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parcel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "carrier",
+          "droid",
+          "parcel"
+        ],
+        "title": "VehicleVersions",
+        "description": "The version of each uploaded drone model, or null where the built-in one flies."
+      }
+    }
+  }
+}

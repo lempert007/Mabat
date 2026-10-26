@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { GripHorizontal, X } from 'lucide-react';
 import { IconButton } from './IconButton';
 import { useDraggable } from '@/hooks/useDraggable';
+import { cn } from '@/lib/cn';
 import { t } from '@/i18n/he';
 
 interface DraggablePanelProps {
@@ -13,6 +14,8 @@ interface DraggablePanelProps {
   storageKey: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Which edge it opens against, clear of the points list or of the mission's readouts. */
+  side?: 'start' | 'end';
 }
 
 /**
@@ -22,7 +25,7 @@ interface DraggablePanelProps {
  * Only opacity is animated here. The element's transform belongs to the drag hook, and two
  * owners writing the same property would fight each other mid-drag.
  */
-export function DraggablePanel({ open, onClose, title, storageKey, children, footer }: DraggablePanelProps) {
+export function DraggablePanel({ open, onClose, title, storageKey, children, footer, side = 'start' }: DraggablePanelProps) {
   const { setElement, onHandlePointerDown } = useDraggable(storageKey);
 
   useEffect(() => {
@@ -46,7 +49,10 @@ export function DraggablePanel({ open, onClose, title, storageKey, children, foo
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
-            className="pointer-events-auto absolute start-4 top-16 flex max-h-[calc(100vh-6rem)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl glass md:start-[20rem]"
+            className={cn(
+              'pointer-events-auto absolute top-16 flex max-h-[calc(100vh-6rem)] w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl glass',
+              side === 'start' ? 'start-4 md:start-[20rem]' : 'end-4',
+            )}
           >
             <header
               onPointerDown={onHandlePointerDown}

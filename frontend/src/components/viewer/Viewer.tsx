@@ -15,6 +15,10 @@ import { ImportPointsDialog } from './ImportPointsDialog';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { SceneSettingsPanel } from './SceneSettingsPanel';
+import { ViewSwitch } from '@/components/mission/ViewSwitch';
+import { MissionHud } from '@/components/mission/MissionHud';
+import { PlacementBanner } from '@/components/mission/PlacementBanner';
+import { MissionPanel } from '@/components/mission/MissionPanel';
 import { useCreatePoi, useDeletePoi, useUpdatePoi } from '@/api/pois';
 import { usePoiNavigation } from '@/hooks/usePoiNavigation';
 import { useViewerKeyboard } from '@/hooks/useViewerKeyboard';
@@ -23,7 +27,9 @@ import { useShareableUrl } from '@/hooks/useShareableUrl';
 import { useAutomaticCover } from '@/hooks/useAutomaticCover';
 import { usePointContextMenu } from '@/hooks/usePointContextMenu';
 import { usePointsTransfer } from '@/hooks/usePointsTransfer';
+import { useMission } from '@/hooks/useMission';
 import { useViewerStore } from '@/store/viewerStore';
+import { useMissionStore } from '@/store/missionStore';
 import { errorMessage } from '@/lib/errorMessage';
 import { toast } from '@/store/toastStore';
 import { modelRadius } from '@/lib/model';
@@ -48,6 +54,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   const fullscreen = useFullscreen(containerRef);
   const [shareOpen, setShareOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [missionOpen, setMissionOpen] = useState(false);
 
   const movingPoiId = useViewerStore((s) => s.movingPoiId);
   const setMovingPoi = useViewerStore((s) => s.setMovingPoi);
@@ -61,6 +68,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   const pendingDiscard = useViewerStore((s) => s.pendingDiscard);
   const confirmDiscard = useViewerStore((s) => s.confirmDiscard);
   const cancelDiscard = useViewerStore((s) => s.cancelDiscard);
+  const introVisible = useViewerStore((s) => s.introVisible);
 
   const nav = usePoiNavigation(pois, radius);
   const createPoi = useCreatePoi(project.id);
@@ -68,11 +76,34 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   const deletePoi = useDeletePoi(project.id);
   const transfer = usePointsTransfer(project);
 
+  const show = useMission(project);
+  const { plan, step, place } = show;
+  const view = useMissionStore((s) => s.view);
+  const missionPlacing = useMissionStore((s) => s.placing);
+  const dismissIntro = useViewerStore((s) => s.dismissIntro);
 
-  useViewerKeyboard({ next: nav.next, prev: nav.prev });
+  // Fresh stores for every project visit.
+  useEffect(
+    () => () => {
+      reset();
+      useMissionStore.getState().reset();
+    },
+    [project.id, reset],
+  );
 
-  // Fresh store for every project visit.
-  useEffect(() => () => reset(), [project.id, reset]);
+  const stageBack = useCallback(() => step(-1), [step]);
+  const stageForward = useCallback(() => step(1), [step]);
+
+  // The mission's timeline runs left to right like any player; the points read right to left.
+  useViewerKeyboard({
+    left: show.visible ? stageBack : nav.next,
+    right: show.visible ? stageForward : nav.prev,
+    togglePlay: show.visible ? show.togglePlay : undefined,
+    enter: plan ? show.watch : dismissIntro,
+  });
+
+  // The handles for editing are drawn while the panel is open.
+  useEffect(() => useMissionStore.getState().setEditing(missionOpen), [missionOpen]);
 
   useShareableUrl(pois, nav);
   useAutomaticCover(project, editable);
@@ -122,6 +153,10 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   /** Drops the point being moved wherever the editor clicked next. */
   const onPlace = useCallback(
     (position: Vec3, normal: Vec3) => {
+      if (useMissionStore.getState().placing !== null) {
+        place(position);
+        return;
+      }
       if (!movingPoiId) return;
       updatePoi.mutate(
         { id: movingPoiId, data: { position, normal } },
@@ -131,7 +166,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         },
       );
     },
-    [movingPoiId, updatePoi, setMovingPoi],
+    [movingPoiId, updatePoi, setMovingPoi, place],
   );
 
   const editPoint = useCallback(
@@ -147,8 +182,23 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
 
   // Stable identities so the memoized markers are not rebuilt on every render.
   const selectFromScene = useCallback((poi: Poi) => nav.goTo(poi), [nav]);
-  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  // The two floating panels open in the same place, so one gives way to the other.
+  const openSettings = useCallback(() => {
+    setMissionOpen(false);
+    setSettingsOpen(true);
+  }, []);
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const toggleMission = useCallback(() => {
+    setSettingsOpen(false);
+    if (!missionOpen && plan) useMissionStore.getState().setView('mission');
+    setMissionOpen(!missionOpen);
+  }, [missionOpen, plan]);
+  // Escape stops a placement before it closes the panel the placement came from.
+  const closeMission = useCallback(() => {
+    const store = useMissionStore.getState();
+    if (store.placing !== null) store.setPlacing(null);
+    else setMissionOpen(false);
+  }, []);
   const startTour = useCallback(() => {
     const first = nav.ordered[0];
     if (first) nav.goTo(first);
@@ -169,7 +219,8 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
       <ViewerCanvas
         project={project}
         pois={nav.ordered}
-        placing={movingPoiId !== null}
+        plan={plan}
+        placing={movingPoiId !== null || missionPlacing !== null}
         onPlace={onPlace}
         onInspect={onInspect}
         onRightClick={editable ? contextMenu.openForSurface : null}
@@ -187,6 +238,8 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         fullscreen={fullscreen}
         onShare={() => setShareOpen(true)}
         onSettings={openSettings}
+        onMission={toggleMission}
+        missionOpen={missionOpen}
         onExportPoints={transfer.exportPoints}
         onImportPoints={transfer.openFilePicker}
         exportingPoints={transfer.isExporting}
@@ -210,19 +263,35 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         onPrev={nav.prev}
         onNext={nav.next}
       />
-      <ViewerBottomBar>
-        <ZoomControl />
-        <TourControls
-          total={nav.ordered.length}
-          index={nav.index}
-          onPrev={nav.prev}
-          onNext={nav.next}
-          onStart={startTour}
+      {plan && !introVisible && <ViewSwitch onWatch={show.watch} />}
+      {show.visible && plan && show.mission ? (
+        <MissionHud
+          plan={plan}
+          mission={show.mission}
+          stage={show.stage}
+          onStep={show.step}
+          telemetryHidden={nav.selected !== null}
         />
-      </ViewerBottomBar>
-      <ControlsHint editable={editable} />
+      ) : (
+        <ViewerBottomBar>
+          <ZoomControl />
+          <TourControls
+            total={nav.ordered.length}
+            index={nav.index}
+            onPrev={nav.prev}
+            onNext={nav.next}
+            onStart={startTour}
+          />
+        </ViewerBottomBar>
+      )}
+      <ControlsHint
+        key={view}
+        editable={editable && !show.visible}
+        hint={show.visible ? t.mission.keysHint : undefined}
+      />
+      <PlacementBanner />
 
-      <IntroOverlay project={project} />
+      <IntroOverlay project={project} onWatch={plan ? show.watch : undefined} />
       <LoadingOverlay />
 
       <ContextMenu anchor={contextMenu.anchor} items={contextMenu.items} onClose={contextMenu.close} />
@@ -264,6 +333,18 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         onClose={cancelDiscard}
         onConfirm={confirmDiscard}
       />
+      {editable && (
+        <MissionPanel
+          open={missionOpen}
+          onClose={closeMission}
+          project={project}
+          mission={show.mission}
+          plan={plan}
+          update={show.update}
+          remove={show.remove}
+          onPreviewStage={show.preview}
+        />
+      )}
       {editable && (
         <SceneSettingsPanel
           open={settingsOpen}

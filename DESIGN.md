@@ -5,6 +5,11 @@ surroundings to a board of directors. Editors upload a model, walk through it, a
 points of interest (POIs) with rich content. Guests explore the model, open any point and
 read everything the editors prepared. Share links open a project at a specific point.
 
+A project can also carry a **delivery mission**: a carrier drone flies in over the model,
+hovers, lowers a droid on a tether, the droid sets a parcel down and is reeled back in. Editors
+place the drop with one click and tune everything else; viewers watch it as a narrated show in
+stages (section 12).
+
 ## 1. Constraints
 
 | Constraint | Consequence |
@@ -60,7 +65,7 @@ migration.
 ### Project settings (jsonb)
 
 `modelRotation` `{x,y,z,w}` or null, `introCamera` `{position, target}`,
-`environment` (`studio`|`night`|`dawn`), `showGrid`.
+`environment` (`studio`|`night`|`dawn`), `showGrid`, `mission` (section 12) or null.
 
 Models are treated as Y-up. A source exported some other way up lands on its face, so a project
 carries a `modelRotation` that the viewer applies to the model. The editor sets it by pressing
@@ -81,6 +86,7 @@ STORAGE_ROOT/
     thumbnail.jpg                  gallery cover, captured from the viewer
     attachments/<attachment-id>.<ext>
     attachments/<attachment-id>.thumb.jpg   (images only)
+    vehicles/carrier.glb | droid.glb | parcel.glb   uploaded drone models, each optional
 ```
 
 ## 5. Model pipeline
@@ -137,11 +143,19 @@ POST   /projects/{id}/attachments       (editor, multipart) → attachment
 GET    /attachments/{id}/file
 GET    /attachments/{id}/thumb
 DELETE /attachments/{id}                (editor)
+
+PUT    /projects/{id}/vehicles/{slot}   (editor, multipart) slot: carrier | droid | parcel
+GET    /projects/{id}/vehicles/{slot}?v=<version>            → GLB
+DELETE /projects/{id}/vehicles/{slot}   (editor)             back to the built-in model
 ```
 
 ## 7. Frontend
 
 Vite + React 18 + TypeScript. One component per file. Feature folders.
+
+- **API types**: generated from the backend's OpenAPI schema (`openapi.json` →
+  `src/api/schema.d.ts` by `openapi-typescript`); `src/types/api.ts` only gives the shapes the
+  names the interface uses. Responses mark every field required, requests leave defaults out.
 
 - **State**: TanStack Query for server data, zustand for viewer UI state (selected POI, mode, tour), no global app state beyond session.
 - **3D**: react-three-fiber, drei (`CameraControls`, `Environment` with procedural light formers, `useGLTF`), `three-mesh-bvh` for fast raycasting (click-to-place, marker occlusion), `@react-three/postprocessing` (bloom, vignette).
@@ -151,9 +165,10 @@ Vite + React 18 + TypeScript. One component per file. Feature folders.
   drops further while the camera moves. Together these took a camera move from 54ms a frame to
   24ms on the same machine.
 - **Loading**: the viewer route is loaded on demand, because three.js and its helpers are over a
-  megabyte and only that route needs them. Login and the gallery ship 49 KB of app code instead
-  of 253 KB. nginx must be told to compress proxied responses or the model is sent uncompressed,
-  which costs about half the transfer.
+  megabyte and only that route needs them. Login and the gallery ship 58 KB of app code, most of
+  it the interface strings; the viewer's 1.4 MB chunk loads only when a project opens. nginx must
+  be told to compress proxied responses or the model is sent uncompressed, which costs about half
+  the transfer.
 - **Rendering**: the canvas runs `frameloop="demand"`, so an idle viewer issues no draw calls at all. Anything that changes the picture without user input asks for the next frame itself. Resolution drops while the camera moves (`regress` + `AdaptiveDpr`) and returns when it settles.
 - **Markers**: a DOM overlay whose transforms are written straight from the render loop, never through React state, so moving the camera re-renders nothing. Occlusion costs a raycast per marker, so one marker is re-tested per frame in rotation. Occluded markers fade; the selected one pulses.
 - **Editing panels**: scene settings live in a draggable, backdrop-free panel so the model stays visible and interactive while a setting is being changed. Continuous controls preview instantly through the query cache and save on a debounce.
@@ -234,6 +249,90 @@ cd backend && uv run pytest
 
 The database role needs permission to create databases: `ALTER ROLE <user> CREATEDB;`.
 
-## 11. Out of scope for v1 (planned)
+## 12. Delivery missions
+
+### What is stored
+
+The mission lives in `settings.mission` (`app/schemas/mission.py`, `types/api.ts`), so it saves
+through the same debounced, live-previewed path as every other scene setting and needs no table
+or migration. Places (`drop`, `hover`, `hub`, `waypoints`) are world positions like a point's;
+everything else is in real metres and seconds, and `unitsPerMeter` relates the two. The editor
+sets it by typing the model's real width. Only `drop` is required: without a hub the carrier
+enters from beyond the model, without a hover point it holds straight above the drop.
+
+Defaults live on the server as well as in `newMission()`, so a mission saved before a field
+existed reads back with that field's default. `defaults.test.ts` reads them from the OpenAPI
+schema and fails if the two disagree.
+
+Drone models are files, not rows: `vehicles/<slot>.glb`, converted by the same pipeline as a
+project's model but while the request waits, since they are small. The file's timestamp is the
+version in `ProjectOut.vehicles`, which keeps a replaced model out of the cache. A slot with no
+file flies the built-in model drawn in code.
+
+### The flight is a pure function of time
+
+`buildPlan(mission, site, heights)` turns a mission into stages and a `frameAt(time)` that says
+where everything is: carrier, heading, bank, pitch, rotor power, landing legs, winch, droid,
+payout, parcel. Playing, scrubbing, jumping to a stage, looping a stage and stopping at stage
+ends are all just asking for another moment, so nothing drifts and nothing needs resetting.
+The trail is read from the plan's own samples, not recorded, so it is right after a jump.
+
+Every motion is a rest-to-rest trapezoidal profile (`profile.ts`), so the speeds the telemetry
+reads off the frames are the speeds being flown. Banking comes from curvature and speed
+(`atan(v²κ/g)`), pitch from acceleration, and the droid swings with the period of a pendulum
+the length of the tether. `plan.test.ts` checks that nothing jumps across any stage boundary.
+
+The flight lives in `lib/mission/`: `types.ts` the shapes, `route.ts` the curve and headings,
+`plan.ts` the stages, `shots.ts` the cameras, `telemetry.ts` the readout. The viewer reaches all
+of it through one hook, `useMission`.
+
+There is deliberately no wind. It added two settings and a weather section to every mission
+for a sway few viewers noticed, and editors were left guessing a direction in degrees.
+
+Stages: takeoff, cruise, approach, lower, deliver, raise, return, land. Takeoff and land exist
+only with a hub; a stage shorter than 50 ms is dropped.
+
+### Drawing it
+
+- `MissionClock` advances the clock and publishes the frame in `missionLive` at `useFrame`
+  priority −1, so it runs before everything else and every object draws the same moment.
+  Negative priorities leave rendering to r3f; positive ones would take it over.
+- Nothing animated reads React state. Vehicles, tether, trail, shadows and the director read
+  `missionLive.frame` in their own frame callbacks; the DOM panels re-render with `time`.
+- Lines that change every frame are rewritten in place (`setLinePoints`). `setPositions`
+  allocates new GPU buffers on every call and the old ones are never freed.
+- Shadows are a soft spot found by one raycast down the BVH per drone, not a shadow map.
+  Navigation-light glows are sprites, not bloom.
+- A model is a tile in the dark, so while a mission plays it gets a ground running to the
+  horizon and a gradient sky (`MissionBackdrop`); from a hundred metres up, every shot towards
+  the horizon would otherwise see mostly black.
+- Measured: rebuilding the plan takes 1.7 ms and happens only on edits; the per-frame flight,
+  telemetry and camera maths is about 1.5 µs. What a frame costs is the drones' ~70 extra draw
+  calls, which has not been measured on the boardroom machine yet.
+
+### The camera
+
+`MissionDirector` drives the camera in three modes. **Cinematic**: each stage has a shot
+(`shots.ts`), recomputed every frame from where the drones are so the camera never lags, and a
+change of shot blends from wherever the camera was. A shot a building would block pulls in in
+front of it and eases back out. **Follow**: the viewer orbits and zooms, the target stays on the
+drone doing the work. **Free**: the camera is theirs. Orbiting or turning the wheel during the
+cinematic hands over to follow. Panning with the right or middle button frees the camera, since
+following would undo the pan every frame, and so does any grab while the panel is open or a
+place is being set. While directed, `regress` is off, or the whole presentation would play at
+reduced resolution.
+
+### The editor
+
+The mission panel floats like the scene settings and saves as it goes. Places are set by
+clicking the model; waypoints keep coming until Escape. Clicking the first drop creates the
+mission and starts playing it at once. Every place in the route tab has a button that flies the
+camera down onto it. The flight tab says whether the tether reaches the drop.
+Stage titles and captions fall back to written defaults, and each stage can pick its shot.
+
+## 13. Out of scope for v1 (planned)
+
+Several missions per project (one per address), a mission timeline exported to video, and
+drone animations driven by the stage rather than looped.
 
 Clipping planes, measurements, multiple models per project, PDF export of points, per-presentation access codes, dragging a marker across the model to reposition it.

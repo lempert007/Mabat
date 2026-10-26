@@ -3,6 +3,7 @@ import { AdaptiveDpr } from '@react-three/drei';
 import { ACESFilmicToneMapping, SRGBColorSpace } from 'three';
 import { Scene } from './Scene';
 import { configureThreeRuntime } from '@/lib/threeRuntime';
+import type { MissionPlan } from '@/lib/mission/types';
 import type { Poi, Project, Vec3 } from '@/types/api';
 
 configureThreeRuntime();
@@ -10,6 +11,7 @@ configureThreeRuntime();
 interface ViewerCanvasProps {
   project: Project;
   pois: Poi[];
+  plan: MissionPlan | null;
   placing: boolean;
   onPlace: (position: Vec3, normal: Vec3) => void;
   onInspect: (position: Vec3) => void;
@@ -19,6 +21,7 @@ interface ViewerCanvasProps {
 export function ViewerCanvas({
   project,
   pois,
+  plan,
   placing,
   onPlace,
   onInspect,
@@ -49,6 +52,7 @@ export function ViewerCanvas({
       <Scene
         project={project}
         pois={pois}
+        plan={plan}
         placing={placing}
         onPlace={onPlace}
         onInspect={onInspect}

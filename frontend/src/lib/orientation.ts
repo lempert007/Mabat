@@ -1,5 +1,5 @@
 import { Quaternion as ThreeQuaternion, Vector3 } from 'three';
-import type { Poi, Quaternion, Vec3 } from '@/types/api';
+import type { Mission, Poi, Quaternion, Vec3 } from '@/types/api';
 
 export const IDENTITY: Quaternion = { x: 0, y: 0, z: 0, w: 1 };
 
@@ -44,12 +44,32 @@ export function isUpright(rotation: Quaternion | null): boolean {
  * This is what the server does when the rotation is saved (`services/orientation.py`); doing it
  * here too keeps the markers on the model while that save is still on its way.
  */
-export function turnPoints(pois: Poi[], from: Quaternion | null, to: Quaternion | null): Poi[] {
+function turner(from: Quaternion | null, to: Quaternion | null) {
   const delta = toThree(to).multiply(toThree(from).invert());
-  const turn = (v: Vec3): Vec3 => {
+  return (v: Vec3): Vec3 => {
     const turned = new Vector3(v.x, v.y, v.z).applyQuaternion(delta);
     return { x: turned.x, y: turned.y, z: turned.z };
   };
+}
+
+/**
+ * A mission's places are world positions too, so they turn with the model the same way. The
+ * mission travels inside the settings, which are saved as sent, so this is the only place it
+ * happens; the server has nothing to redo.
+ */
+export function turnMission(mission: Mission, from: Quaternion | null, to: Quaternion | null): Mission {
+  const turn = turner(from, to);
+  return {
+    ...mission,
+    hub: mission.hub && turn(mission.hub),
+    drop: mission.drop && turn(mission.drop),
+    hover: mission.hover && turn(mission.hover),
+    waypoints: mission.waypoints.map(turn),
+  };
+}
+
+export function turnPoints(pois: Poi[], from: Quaternion | null, to: Quaternion | null): Poi[] {
+  const turn = turner(from, to);
   return pois.map((poi) => ({
     ...poi,
     position: turn(poi.position),

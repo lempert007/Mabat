@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { MapPin } from 'lucide-react';
+import { MapPin, Navigation } from 'lucide-react';
 import { ProjectCardCover } from './ProjectCardCover';
 import { ProjectStatusBadge } from './ProjectStatusBadge';
 import { ProjectMenu } from './ProjectMenu';
@@ -64,6 +64,12 @@ export function ProjectCard({
         <div className="flex items-center justify-between text-[12px] text-fg-3">
           <ProjectStatusBadge project={project} onToggleStage={canEdit ? onToggleStage : undefined} />
           <span className="flex items-center gap-3">
+            {project.settings.mission?.drop && (
+              <span className="inline-flex items-center gap-1 text-accent-strong">
+                <Navigation size={12} />
+                {t.mission.badge}
+              </span>
+            )}
             <span className="inline-flex items-center gap-1">
               <MapPin size={12} />
               {counted(project.poiCount, t.gallery.onePoint, t.gallery.manyPoints)}

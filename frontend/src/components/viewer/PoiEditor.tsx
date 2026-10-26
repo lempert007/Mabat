@@ -117,14 +117,18 @@ export function PoiEditor({ poi, categories, onDone, onDeleted }: PoiEditorProps
           <Input value={draft.title} onChange={(event) => patch({ title: event.target.value })} autoFocus />
         </Field>
         <Field label={t.panel.category}>
-          <Select value={draft.categoryId} onChange={(event) => patch({ categoryId: event.target.value })}>
-            <option value="">{t.common.none}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </Select>
+          <Select
+            value={draft.categoryId}
+            onChange={(categoryId) => patch({ categoryId })}
+            options={[
+              { value: '', label: t.common.none },
+              ...categories.map((category) => ({
+                value: category.id,
+                label: category.name,
+                icon: <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: category.color }} />,
+              })),
+            ]}
+          />
         </Field>
         <Field label={t.panel.summary}>
           <TextArea
