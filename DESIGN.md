@@ -309,13 +309,22 @@ its own, a size, and what it starts on:
   with no keyframes never gets off, so a parcel on a rover simply goes where the rover goes.
 - **the model**, standing at its first keyframe from the start of the mission.
 
-A keyframe is a place clicked on the model, a height above it, the moment it is reached (seconds
-after touchdown) and a wait. This is simpler than general keyframing on purpose: there is no
-rotation to key and no curve to edit. `track.ts` draws a centripetal Catmull-Rom path through the
-places and drives the distance along it with a monotone cubic through each keyframe's moment, so
-an actor arrives exactly on time, never backs up, starts and stops at rest, stands still through
-a wait, and faces the way it is going, turning in from where it started. Rover wheels turn by the
-distance covered and an uploaded model's own animation runs on the mission clock, so both scrub.
+A keyframe is a place clicked on the model with the surface's normal there, a lift off that
+surface, the moment it is reached (seconds after touchdown), a wait, and optionally which way to
+face and how far to lean. This is simpler than general keyframing on purpose: there is no curve to
+edit and nothing to key that the motion can work out. `track.ts` draws a centripetal Catmull-Rom
+path through the places and drives the distance along it with a monotone cubic through each
+keyframe's moment, so an actor arrives exactly on time, never backs up, starts and stops at rest,
+and stands still through a wait. Rover wheels turn by the distance covered and an uploaded
+model's own animation runs on the mission clock, so both scrub.
+
+How an actor stands is built from three parts: its up, its heading about that up, and a lean.
+An actor that **follows surfaces** (rovers and parcels by default, not drones) takes its up from
+the surface each keyframe was clicked on, and its up turns from one to the next along the way, so
+it can drive off a yard and up a wall. The heading follows the direction of travel unless a
+keyframe sets one; it is turned into on the way to that keyframe and out of on the way off, and
+two keyframes in the same place turn it on the spot. Pitch and roll are eased between keyframes.
+A rider takes its ride's whole orientation and sits along its ride's up.
 
 The carrier stays until the last keyframe is done plus `dwell`. While the ground plays, the camera
 watches whatever set off most recently and is still moving, a moment before it moves, and stays on
@@ -370,7 +379,19 @@ lane per actor, a bar while it rides, a line per move, a block per wait, a diamo
 Dragging a diamond retimes it and seeks the scene to it, and it snaps to any other actor's moment
 within a few pixels, which is how two things are made to happen together. In the scene each
 actor's path is drawn in its lane's colour with a handle on every keyframe; clicking one picks it
-up and the next click puts it down.
+up and the next click puts it down. The selected actor's keyframes carry an arrow for the way it
+faces there, and clicking an actor in the scene opens it. A keyframe's facing is set on a compass
+dial, or with `[` and `]` in 15° steps; its lean folds away until wanted.
+
+Every mission edit can be undone (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, or the panel's footer). Edits
+within 700 ms of each other are one step, so a drag or a typed name goes back in one go. Turning
+the model clears the history, since the earlier versions stand where the model used to be.
+
+The camera is a working tool while editing. Opening the panel frees it from the director, and
+in the mission it orbits and zooms about the surface under the pointer (`CursorPivot`), not a
+fixed target that may be a hundred metres away; that is what makes working on a one-metre rover
+feel normal. Double-clicking flies in to 18 m rather than to a fraction of the whole model, and
+**follow** stays with the selected actor while scrubbing.
 Stage titles and captions fall back to written defaults, and each stage can pick its shot.
 
 ### Noise

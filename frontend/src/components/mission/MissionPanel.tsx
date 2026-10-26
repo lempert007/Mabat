@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Goal, Trash2 } from 'lucide-react';
+import { Goal, Redo2, Trash2, Undo2 } from 'lucide-react';
+import { IconButton } from '@/components/ui/IconButton';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { DraggablePanel } from '@/components/ui/DraggablePanel';
@@ -10,6 +11,7 @@ import { SceneTab } from './SceneTab';
 import { StagesTab } from './StagesTab';
 import { NoiseTab } from './NoiseTab';
 import { useMissionStore, type MissionTab } from '@/store/missionStore';
+import { useMissionShortcuts } from '@/hooks/useMissionShortcuts';
 import { newMission } from '@/lib/mission/defaults';
 import { formatClock } from '@/lib/format';
 import type { MissionChange } from '@/hooks/useMissionSettings';
@@ -22,11 +24,14 @@ const TABS: MissionTab[] = ['route', 'flight', 'scene', 'stages', 'noise'];
 interface MissionPanelProps {
   open: boolean;
   onClose: () => void;
+  onEscape: () => void;
   project: Project;
   mission: Mission | null;
   plan: MissionPlan | null;
   update: (change: MissionChange) => void;
   remove: () => void;
+  undo: () => void;
+  redo: () => void;
   onPreviewStage: (index: number) => void;
 }
 
@@ -39,13 +44,16 @@ const copy = t.mission.panel;
  * A project without a mission starts from one question: where does the rope set down. Everything
  * else has a sensible default, so one click makes a mission that plays.
  */
-export function MissionPanel({ open, onClose, project, mission, plan, update, remove, onPreviewStage }: MissionPanelProps) {
+export function MissionPanel({ open, onClose, onEscape, project, mission, plan, update, remove, undo, redo, onPreviewStage }: MissionPanelProps) {
   const tab = useMissionStore((s) => s.tab);
   const setTab = useMissionStore((s) => s.setTab);
   const [confirming, setConfirming] = useState(false);
   const placing = useMissionStore((s) => s.placing);
   const setPlacing = useMissionStore((s) => s.setPlacing);
   const playable = mission && plan;
+  const canUndo = useMissionStore((s) => s.past.length > 0);
+  const canRedo = useMissionStore((s) => s.future.length > 0);
+  useMissionShortcuts({ open, plan, update, undo, redo });
   const shown = mission ?? newMission();
 
   return (
@@ -53,14 +61,23 @@ export function MissionPanel({ open, onClose, project, mission, plan, update, re
       <DraggablePanel
         open={open}
         onClose={onClose}
+        onEscape={onEscape}
         title={copy.title}
         storageKey="mission-panel"
         side="end"
         footer={
           playable ? (
             <div className="flex items-center justify-between">
-              <span className="text-[12px] text-fg-3">
-                {copy.duration} <bdi className="ms-1 font-semibold tabular-nums text-fg">{formatClock(plan.duration)}</bdi>
+              <span className="flex items-center gap-1">
+                <IconButton label={copy.undo} size="sm" disabled={!canUndo} onClick={undo}>
+                  <Undo2 size={15} className="rtl:-scale-x-100" />
+                </IconButton>
+                <IconButton label={copy.redo} size="sm" disabled={!canRedo} onClick={redo}>
+                  <Redo2 size={15} className="rtl:-scale-x-100" />
+                </IconButton>
+                <span className="ms-1 text-[12px] text-fg-3">
+                  {copy.duration} <bdi className="ms-1 font-semibold tabular-nums text-fg">{formatClock(plan.duration)}</bdi>
+                </span>
               </span>
               <Button size="sm" variant="ghost" icon={<Trash2 size={14} />} onClick={() => setConfirming(true)}>
                 {copy.remove}

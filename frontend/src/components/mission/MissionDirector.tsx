@@ -99,7 +99,11 @@ export function MissionDirector({ plan, mission }: { plan: MissionPlan; mission:
     if (mode !== 'follow') follow.current.subject = null;
 
     if (mode === 'follow') {
-      const { subject, focus: anchor } = frame;
+      // While editing, following stays with the actor being worked on.
+      const { editing, selected } = useMissionStore.getState();
+      const chosen = editing && selected ? plan.cast.findIndex((member) => member.actor.id === selected.actor) : -1;
+      const subject = chosen >= 0 ? chosen : frame.subject;
+      const anchor = chosen >= 0 ? frame.actors[chosen].position : frame.focus;
       const state = follow.current;
       if (state.subject !== subject) {
         controls.getTarget(state.from);

@@ -4,6 +4,8 @@ import { buildPlan, stageIndexAt } from './plan';
 import type { MissionFrame, MissionPlan } from './types';
 import { newActor, newMission } from './defaults';
 import { telemetryAt } from './telemetry';
+import { newKey } from './keys';
+import { UP, yawOf } from './track';
 import type { Actor, Mission } from '@/types/api';
 
 const SITE = { center: new Vector3(0, 0, 0), radius: 200 };
@@ -23,8 +25,8 @@ const roverMission = (): Partial<Mission> => ({
     actor('rover', {
       id: 'rover',
       keys: [
-        { at: 6, place: { x: 52, y: 2, z: -30 }, lift: 0, hold: 4 },
-        { at: 14, place: { x: 52, y: 2, z: -18 }, lift: 0, hold: 0 },
+        { ...newKey(6, { x: 52, y: 2, z: -30 }, null, 0), hold: 4 },
+        { ...newKey(14, { x: 52, y: 2, z: -18 }, null, 0), hold: 0 },
       ],
     }),
     actor('parcel', {
@@ -32,13 +34,15 @@ const roverMission = (): Partial<Mission> => ({
       rides: 'rover',
       mount: 'above',
       leaves: 7,
-      keys: [{ at: 8, place: { x: 53, y: 2, z: -30 }, lift: 0, hold: 0 }],
+      keys: [{ ...newKey(8, { x: 53, y: 2, z: -30 }, null, 0), hold: 0 }],
     }),
   ],
 });
 
 const moved = (a: MissionFrame, b: MissionFrame) =>
   Math.max(a.carrier.distanceTo(b.carrier), a.hook.distanceTo(b.hook), ...a.actors.map((pose, i) => pose.position.distanceTo(b.actors[i].position)));
+
+const facing = (pose: MissionFrame['actors'][number]) => yawOf(new Vector3(0, 0, 1).applyQuaternion(pose.quaternion), UP) ?? NaN;
 
 const bottom = (mission: MissionPlan, frame: MissionFrame, index: number) => frame.actors[index].position.y - mission.cast[index].half;
 
@@ -72,7 +76,7 @@ describe('buildPlan', () => {
       const frame = mission.sample(time);
       // At 1x a frame lasts 1/60 s; nothing in this mission moves faster than ~30 m/s.
       expect(moved(previous, frame)).toBeLessThan(0.75);
-      expect(Number.isFinite(frame.heading + frame.bank + frame.pitch + frame.actors[0].heading)).toBe(true);
+      expect(Number.isFinite(frame.heading + frame.bank + frame.pitch + frame.actors[0].quaternion.w)).toBe(true);
       previous = frame;
     }
   });
@@ -124,8 +128,8 @@ describe('buildPlan', () => {
     expect(at(14).position.z).toBeCloseTo(-18, 3);
     expect(bottom(mission, mission.sample(mission.onsite + 14), 0)).toBeCloseTo(2, 3);
     // Driving off towards +x, then turning onto +z.
-    expect(at(3).heading).toBeCloseTo(Math.PI / 2, 0);
-    expect(at(13.9).heading).toBeCloseTo(0, 0);
+    expect(facing(at(3))).toBeCloseTo(Math.PI / 2, 0);
+    expect(facing(at(13.9))).toBeCloseTo(0, 0);
   });
 
   it('carries a rider until it gets off, then leaves it where it was put', () => {

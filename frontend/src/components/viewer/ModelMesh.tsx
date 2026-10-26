@@ -63,6 +63,8 @@ export function ModelMesh({ url, rotation, placing, onPlace, onInspect }: ModelM
       event.stopPropagation();
       const normal = event.face ? event.face.normal.clone() : new Vector3(0, 1, 0);
       normal.transformDirection(event.object.matrixWorld).normalize();
+      // A face seen from behind still means the side the click came from.
+      if (normal.dot(event.ray.direction) > 0) normal.negate();
       onPlace(fromVector3(event.point), fromVector3(normal));
     },
     [onPlace],

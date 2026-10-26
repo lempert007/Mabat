@@ -134,7 +134,7 @@ from beyond the model. Everything else is optional and changes the scene as you 
 | --- | --- |
 | מסלול | The drop, a hover point if the carrier should hold off to one side, a hub to take off from and land on, waypoints in order, and the model's real width if its units are not metres. Each place has a button that flies the camera to it |
 | טיסה | The carrier (name, size, colour or your own model), cruise altitude and speed, climb rate, hover altitude, rope length (with a check that it reaches), winch speed, release height, and how long it waits at the end |
-| בשטח | Everything on the ground. Add a drone, a rover or a parcel, give it your own model if you like, and say what it starts on: the rope, another actor (on top or hanging underneath), or standing on the model. Then click its stops on the model, one after another; each gets a time at that kind's own pace, which you can change. A timeline docks above the player with one lane per actor: drag a stop to retime it and it snaps to other actors' stops, drag the end of a wait to lengthen it |
+| בשטח | Everything on the ground. Add a drone, a rover or a parcel, give it your own model if you like, and say what it starts on: the rope, another actor (on top or hanging underneath), or standing on the model. Then click its stops on the model, one after another, on the ground, a roof or a wall; each gets a time at that kind's own pace, which you can change. Each stop can say which way to face (a compass dial) and how far to lean, and an actor that sticks to surfaces stands square to whatever it was clicked on. A timeline docks above the player with one lane per actor: drag a stop to retime it and it snaps to other actors' stops, drag the end of a wait to lengthen it, double-click to fly to it |
 | שלבים | Each stage's title, caption and camera, with a button to watch just that stage |
 | רעש | Noise contours from your acoustic study, traced on the ground point by point. In the show, sound rings run out from the drone to each contour's edge, which glows; outside every contour it is quiet. Hidden until you turn it on, from the player or this tab |
 
@@ -151,6 +151,10 @@ the show at ½×, 1×, 2× or 4×.
 | `Esc` | Stop placing on the model |
 | `Enter` / `Backspace` | While adding waypoints, stops or a noise contour: finish / take back the last point |
 | `→` `←` `Delete` | On a stop focused in the timeline: a tenth of a second later or earlier (`Shift`: a second), remove it |
+| `[` `]` `Delete` | On the selected stop: turn it 15° either way, remove it |
+| `Ctrl+Z` / `Ctrl+Shift+Z` | With the mission panel open: undo / redo |
+
+While editing, the camera orbits and zooms about whatever is under the pointer, double-click flies in close, and **מעקב** keeps the selected actor in view.
 
 ### The neighbourhood demo
 

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { MissionPlan, ModelHeights } from '@/lib/mission/types';
+import type { Mission } from '@/types/api';
 
 /** Which showcase is on screen: the model with its points, or the mission playing over it. */
 export type ShowcaseView = 'explore' | 'mission';
@@ -47,6 +48,9 @@ export function isTracing(target: PlaceTarget | null): boolean {
 /** The mission panel's tabs. The timeline of the ground shows while its tab is open. */
 export type MissionTab = 'route' | 'flight' | 'scene' | 'stages' | 'noise';
 
+/** The ground's tab is open, so its timeline docks in the player and takes the room around it. */
+export const selectSceneOpen = (s: { editing: boolean; tab: MissionTab }) => s.editing && s.tab === 'scene';
+
 /** The actor being edited, and which of its keyframes, if one. */
 export interface Selection {
   actor: string;
@@ -57,6 +61,9 @@ export const PLAYBACK_RATES = [0.5, 1, 2, 4];
 
 /** A long pause between frames, such as a background tab, is not flight time. */
 const MAX_STEP = 0.1;
+/** Edits closer together than this are one step to undo, so a drag is undone in one go, ms. */
+const GESTURE = 700;
+const HISTORY = 100;
 
 interface MissionState {
   view: ShowcaseView;
@@ -78,6 +85,10 @@ interface MissionState {
   noiseShown: boolean;
   tab: MissionTab;
   selected: Selection | null;
+  /** The mission as it was before each edit, and as it was before each undo. Null: no mission. */
+  past: (Mission | null)[];
+  future: (Mission | null)[];
+  lastEdit: number;
 
   setView: (view: ShowcaseView) => void;
   /** Opens the mission from its first moment, playing, with the director at the camera. */
@@ -98,6 +109,12 @@ interface MissionState {
   setNoiseShown: (shown: boolean) => void;
   setTab: (tab: MissionTab) => void;
   select: (selection: Selection | null) => void;
+  /** Notes the mission as it stands, before an edit changes it. */
+  record: (mission: Mission | null) => void;
+  /** The mission to go back to, or forward to, given the one now; undefined when there is none. */
+  takeUndo: (current: Mission | null) => Mission | null | undefined;
+  takeRedo: (current: Mission | null) => Mission | null | undefined;
+  clearHistory: () => void;
   reset: () => void;
 }
 
@@ -115,6 +132,9 @@ const initialState = {
   noiseShown: false,
   tab: 'route' as MissionTab,
   selected: null as Selection | null,
+  past: [] as (Mission | null)[],
+  future: [] as (Mission | null)[],
+  lastEdit: 0,
 };
 
 /** The stage a moment belongs to. A moment exactly on a boundary starts the next stage. */
@@ -154,7 +174,14 @@ export const useMissionStore = create<MissionState>((set, get) => ({
         ? { placing }
         : { placing, camera: 'free', ...(noiseTarget(placing) && { noiseShown: true }) },
     ),
-  setEditing: (editing) => set({ editing, placing: editing ? get().placing : null }),
+  // Editing, the camera is a working tool, so the director lets go of it.
+  setEditing: (editing) =>
+    set({
+      editing,
+      placing: editing ? get().placing : null,
+      selected: editing ? get().selected : null,
+      ...(editing && get().camera === 'cinematic' && { camera: 'free' as CameraMode }),
+    }),
   setHeight: (measures, height) =>
     set((state) => {
       const heights = { ...state.heights };
@@ -165,5 +192,24 @@ export const useMissionStore = create<MissionState>((set, get) => ({
   setNoiseShown: (noiseShown) => set({ noiseShown }),
   setTab: (tab) => set({ tab }),
   select: (selected) => set({ selected }),
+  record: (mission) => {
+    const now = performance.now();
+    const { past, lastEdit } = get();
+    if (now - lastEdit < GESTURE) return set({ lastEdit: now });
+    set({ past: [...past.slice(1 - HISTORY), mission], future: [], lastEdit: now });
+  },
+  takeUndo: (current) => {
+    const { past, future } = get();
+    if (past.length === 0) return undefined;
+    set({ past: past.slice(0, -1), future: [...future, current], lastEdit: 0, placing: null });
+    return past[past.length - 1];
+  },
+  takeRedo: (current) => {
+    const { past, future } = get();
+    if (future.length === 0) return undefined;
+    set({ future: future.slice(0, -1), past: [...past, current], lastEdit: 0, placing: null });
+    return future[future.length - 1];
+  },
+  clearHistory: () => set({ past: [], future: [], lastEdit: 0 }),
   reset: () => set({ ...initialState }),
 }));

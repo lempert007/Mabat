@@ -1,6 +1,6 @@
-import { Vector3 } from 'three';
+import { MathUtils, Quaternion, Vector3 } from 'three';
 import { BUILT_IN_HEIGHT } from './defaults';
-import { makeTrack, type TrackNode, type TrackPose } from './track';
+import { makeTrack, UP, yawOf, type TrackNode, type TrackPose } from './track';
 import type { ActorPose, CastMember, MissionFrame, ModelHeights } from './types';
 import { toVector3 } from '@/lib/vec';
 import type { Actor } from '@/types/api';
@@ -60,7 +60,7 @@ export function lineUp(actors: Actor[], heights: ModelHeights, unitsPerMeter: nu
 
   const members = actors.map((actor) => {
     const size = actor.size * unitsPerMeter;
-    return { actor, kind: actor.kind, size, half: (size * (heights[actor.id] ?? BUILT_IN_HEIGHT[actor.kind])) / 2 };
+    return { actor, size, half: (size * (heights[actor.id] ?? BUILT_IN_HEIGHT[actor.kind])) / 2 };
   });
   const riders = (parent: number, mount: Actor['mount']) =>
     actors.flatMap((actor, i) => (ride[i] === parent && actor.mount === mount ? [i] : []));
@@ -108,14 +108,33 @@ export interface Stage {
   unitsPerMeter: number;
 }
 
-export const newPose = (): ActorPose => ({ position: new Vector3(), heading: 0, travelled: 0, power: 0, attached: true });
+export const newPose = (): ActorPose => ({ position: new Vector3(), quaternion: new Quaternion(), travelled: 0, power: 0, attached: true });
+
+const FORWARD = new Vector3(0, 0, 1);
+
+/** A keyframe as a place on the track: off its surface by its lift, standing on it if it follows surfaces. */
+function keyNode(actor: Actor, key: Actor['keys'][number], half: number, onsite: number, u: number): TrackNode {
+  const normal = key.normal ? toVector3(key.normal).normalize() : UP.clone();
+  const up = actor.followsSurface ? normal : UP.clone();
+  return {
+    position: toVector3(key.place).addScaledVector(normal, key.lift * u).addScaledVector(up, half),
+    arrive: onsite + key.at,
+    leave: onsite + key.at + key.hold,
+    aloft: key.lift > 0.05,
+    up,
+    yaw: key.heading === null ? null : MathUtils.degToRad(key.heading),
+    pitch: MathUtils.degToRad(key.pitch),
+    roll: MathUtils.degToRad(key.roll),
+  };
+}
 
 /** Each actor's motion, built in riding order so a rider knows where its ride is when it gets off. */
 export function animate(lineup: Lineup, stage: Stage): Cast {
   const { members: sized, ride, order, load } = lineup;
   const u = stage.unitsPerMeter;
   const members: CastMember[] = sized.map((member) => ({ ...member, track: null }));
-  const scratch: TrackPose = { position: new Vector3(), heading: 0, travelled: 0, speed: 0, power: 0 };
+  const scratch: TrackPose = { position: new Vector3(), quaternion: new Quaternion(), travelled: 0, speed: 0, power: 0 };
+  const up = new Vector3();
 
   const placeOne = (frame: MissionFrame, time: number, i: number) => {
     const member = members[i];
@@ -125,7 +144,7 @@ export function animate(lineup: Lineup, stage: Stage): Cast {
     if (track && (parent === null || time >= track.start)) {
       track.at(time, scratch);
       out.position.copy(scratch.position);
-      out.heading = scratch.heading;
+      out.quaternion.copy(scratch.quaternion);
       out.travelled = scratch.travelled;
       out.power = scratch.power;
       out.attached = false;
@@ -135,19 +154,21 @@ export function animate(lineup: Lineup, stage: Stage): Cast {
     out.attached = parent !== null;
     if (parent === 'hook') {
       out.position.copy(frame.hook).y -= lineup.loadUp;
-      out.heading = frame.heading;
+      out.quaternion.setFromAxisAngle(UP, frame.heading);
       // A drone on the rope steadies itself on the way down.
-      out.power = member.kind === 'drone' && frame.payout > 0.05 ? 0.85 : 0;
+      out.power = member.actor.kind === 'drone' && frame.payout > 0.05 ? 0.85 : 0;
     } else if (parent === null) {
       // Standing on the model with nowhere set yet: wait at the drop until it is placed.
       out.position.copy(frame.hook);
-      out.heading = 0;
+      out.quaternion.identity();
       out.power = 0;
     } else {
+      // On top of its ride or under it, whichever way the ride is standing.
       const under = frame.actors[parent];
       const offset = members[parent].half + member.half;
-      out.position.copy(under.position).y += member.actor.mount === 'above' ? offset : -offset;
-      out.heading = under.heading;
+      up.copy(UP).applyQuaternion(under.quaternion);
+      out.position.copy(under.position).addScaledVector(up, member.actor.mount === 'above' ? offset : -offset);
+      out.quaternion.copy(under.quaternion);
       out.power = 0;
     }
   };
@@ -159,17 +180,13 @@ export function animate(lineup: Lineup, stage: Stage): Cast {
   order.forEach((i, k) => {
     const { actor, half } = members[i];
     const parent = ride[i];
-    const keyNodes: TrackNode[] = actor.keys.map((key) => ({
-      position: toVector3(key.place).setY(key.place.y + key.lift * u + half),
-      arrive: stage.onsite + key.at,
-      leave: stage.onsite + key.at + key.hold,
-      aloft: key.lift > 0.05,
-    }));
+    const keyNodes = actor.keys.map((key) => keyNode(actor, key, half, stage.onsite, u));
 
     if (parent === null) {
       if (keyNodes.length === 0) return;
+      // Standing on the model, it starts out facing the way it will go.
       const [first, second] = keyNodes;
-      const heading = second ? Math.atan2(second.position.x - first.position.x, second.position.z - first.position.z) : 0;
+      const heading = (second && yawOf(second.position.clone().sub(first.position), first.up)) ?? first.yaw ?? 0;
       members[i].track = makeTrack(keyNodes, heading, actor.turns, u);
       return;
     }
@@ -180,13 +197,19 @@ export function animate(lineup: Lineup, stage: Stage): Cast {
     const frame = stage.base(leave);
     placeUpTo(frame, leave, k + 1);
     const from = frame.actors[i];
+    const startUp = UP.clone().applyQuaternion(from.quaternion);
+    const heading = yawOf(FORWARD.clone().applyQuaternion(from.quaternion), startUp) ?? 0;
     const start: TrackNode = {
       position: from.position.clone(),
       arrive: leave,
       leave,
       aloft: parent === 'hook' ? stage.releasedAloft : true,
+      up: startUp,
+      yaw: heading,
+      pitch: 0,
+      roll: 0,
     };
-    members[i].track = makeTrack([start, ...keyNodes], from.heading, actor.turns, u);
+    members[i].track = makeTrack([start, ...keyNodes], heading, actor.turns, u);
   });
 
   const moves = members.flatMap((member, i) => member.track?.moves.map(([from, to]) => ({ from: from - LEAD, to, i })) ?? []);

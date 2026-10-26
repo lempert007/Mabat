@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useMissionPlan } from './useMissionPlan';
 import { useMissionSettings } from './useMissionSettings';
 import { actorTarget, isTracing, noiseTarget, useMissionStore } from '@/store/missionStore';
-import { moveKey, withNextKey } from '@/lib/mission/keys';
+import { editActor, editKey, removeKey, withNextKey } from '@/lib/mission/keys';
 import { useViewerStore } from '@/store/viewerStore';
 import { stageIndexAt } from '@/lib/mission/plan';
 import type { Project, Vec3 } from '@/types/api';
@@ -13,7 +13,7 @@ import type { Project, Vec3 } from '@/types/api';
  */
 export function useMission(project: Project) {
   const plan = useMissionPlan(project);
-  const { mission, update, remove } = useMissionSettings(project);
+  const { mission, update, remove, undo, redo } = useMissionSettings(project);
   const visible = useMissionStore((s) => s.view === 'mission') && plan !== null;
   const stage = useMissionStore((s) => (plan ? stageIndexAt(plan, s.time) : 0));
 
@@ -72,7 +72,7 @@ export function useMission(project: Project) {
 
   /** Puts whatever the panel is placing at the spot the editor clicked. */
   const place = useCallback(
-    (position: Vec3) => {
+    (position: Vec3, normal: Vec3) => {
       const store = useMissionStore.getState();
       const target = store.placing;
       if (target === null) return;
@@ -86,14 +86,14 @@ export function useMission(project: Project) {
         if (!plan || index === -1) return;
         if (actor.key !== undefined) store.setPlacing(null);
         let arrives = 0;
-        update((current) => ({
-          actors: current.actors.map((a, i) => {
-            if (i !== index) return a;
-            const next = actor.key === undefined ? withNextKey(plan, a, index, position) : moveKey(a, actor.key, position);
+        update(
+          editActor(actor.actor, (current) => {
+            const next =
+              actor.key === undefined ? withNextKey(plan, current, index, position, normal) : editKey(current, actor.key, { place: position, normal });
             arrives = next.keys[actor.key ?? next.keys.length - 1].at;
             return next;
           }),
-        }));
+        );
         // Shows it arriving where the click put it.
         store.pause();
         store.seek(plan.onsite + arrives);
@@ -136,9 +136,7 @@ export function useMission(project: Project) {
         noise: current.noise.map((contour, i) => (i === noise.zone ? { ...contour, points: contour.points.slice(0, -1) } : contour)),
       }));
     } else if (actor) {
-      update((current) => ({
-        actors: current.actors.map((a) => (a.id === actor.actor ? { ...a, keys: a.keys.slice(0, -1) } : a)),
-      }));
+      update(editActor(actor.actor, (current) => removeKey(current, current.keys.length - 1)));
     }
   }, [update]);
 
@@ -147,5 +145,5 @@ export function useMission(project: Project) {
     remove();
   }, [remove]);
 
-  return { plan, mission, visible, stage, update, remove: removeMission, watch, step, togglePlay, preview, place, undoPlace };
+  return { plan, mission, visible, stage, update, remove: removeMission, undo, redo, watch, step, togglePlay, preview, place, undoPlace };
 }

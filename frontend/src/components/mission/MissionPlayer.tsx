@@ -3,7 +3,7 @@ import { AudioLines, Clapperboard, Crosshair, Move3d, Pause, Play, Presentation,
 import { IconButton } from '@/components/ui/IconButton';
 import { StageTimeline } from './StageTimeline';
 import { SceneTimeline } from './SceneTimeline';
-import { PLAYBACK_RATES, useMissionStore, type CameraMode } from '@/store/missionStore';
+import { PLAYBACK_RATES, selectSceneOpen, useMissionStore, type CameraMode } from '@/store/missionStore';
 import { formatClock } from '@/lib/format';
 import { isClosed } from '@/lib/mission/noise';
 import { cn } from '@/lib/cn';
@@ -41,7 +41,7 @@ export function MissionPlayer({ plan, mission, current, onStep, update }: Missio
   const loopStage = useMissionStore((s) => s.loopStage);
   const noiseShown = useMissionStore((s) => s.noiseShown);
   const editing = useMissionStore((s) => s.editing);
-  const sceneOpen = useMissionStore((s) => s.editing && s.tab === 'scene');
+  const sceneOpen = useMissionStore(selectSceneOpen);
   const { play, pause, setRate, setCamera, setStepwise, setLoopStage, setNoiseShown } = useMissionStore.getState();
   const hasNoise = mission.noise.some(isClosed);
   const finished = time >= plan.duration - 1e-3;

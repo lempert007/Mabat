@@ -46,16 +46,23 @@ class Vehicle(ApiModel):
 
 
 class Keyframe(ApiModel):
-    """Where an actor is at one moment: it arrives, waits, and moves on to the next."""
+    """Where an actor is at one moment, and which way it faces: it arrives, waits, moves on."""
 
     # Seconds after the load is set down.
     at: float = Field(ge=0, le=3600)
     # The spot clicked on the model, world coordinates.
     place: Vec3
-    # Metres above that spot, for something flying.
+    # Which way that surface faces, world space. Null: straight up.
+    normal: Vec3 | None = None
+    # Metres off that spot, away from the surface, for something flying.
     lift: float = Field(default=0, ge=0, le=500)
     # Seconds it waits there before moving on.
     hold: float = Field(default=0, ge=0, le=600)
+    # Degrees it faces, turning about its own up. Null: the way it is moving.
+    heading: float | None = Field(default=None, ge=-180, le=180)
+    # Degrees it leans nose down and rolls to its right, on top of everything else.
+    pitch: float = Field(default=0, ge=-90, le=90)
+    roll: float = Field(default=0, ge=-180, le=180)
 
 
 class Actor(ApiModel):
@@ -77,6 +84,9 @@ class Actor(ApiModel):
     stays_hooked: bool = False
     # Faces the way it moves. Off for something that is carried, like a parcel.
     turns: bool = True
+    # Stands square to whatever it is on, so it climbs a wall or leans on a slope. Off for
+    # something that keeps itself level, like a drone.
+    follows_surface: bool = True
     keys: list[Keyframe] = Field(default_factory=list, max_length=40)
 
     @model_validator(mode="after")

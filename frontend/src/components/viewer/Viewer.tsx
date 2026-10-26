@@ -46,6 +46,8 @@ interface ViewerProps {
 
 /** How close a double-click zoom sits to the surface, relative to the model radius. */
 const FOCUS_DISTANCE = 0.18;
+/** How close it sits during a mission, metres. */
+const MISSION_FOCUS = 18;
 
 export function Viewer({ project, pois, categories, session }: ViewerProps) {
   const editable = session.role === 'editor';
@@ -127,9 +129,13 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
       }
       const current = cameraApi.getPose();
       setZoomReturnPose(current);
-      cameraApi.flyTo(closeUpPose(current.position, point, radius * FOCUS_DISTANCE));
+      // During a mission the things worth a close look are drones a metre across, not buildings.
+      const mission = useMissionStore.getState().view === 'mission' && plan;
+      if (mission) useMissionStore.getState().setCamera('free');
+      const distance = mission ? Math.min(radius * FOCUS_DISTANCE, MISSION_FOCUS * plan.unitsPerMeter) : radius * FOCUS_DISTANCE;
+      cameraApi.flyTo(closeUpPose(current.position, point, distance));
     },
-    [cameraApi, zoomReturnPose, setZoomReturnPose, radius],
+    [cameraApi, zoomReturnPose, setZoomReturnPose, radius, plan],
   );
 
   const createPointAt = useCallback(
@@ -155,7 +161,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
   const onPlace = useCallback(
     (position: Vec3, normal: Vec3) => {
       if (useMissionStore.getState().placing !== null) {
-        place(position);
+        place(position, normal);
         return;
       }
       if (!movingPoiId) return;
@@ -194,10 +200,12 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
     if (!missionOpen && plan) useMissionStore.getState().setView('mission');
     setMissionOpen(!missionOpen);
   }, [missionOpen, plan]);
-  // Escape stops a placement before it closes the panel the placement came from.
+  const hideMission = useCallback(() => setMissionOpen(false), []);
+  // Escape stops a placement, then lets go of a selected keyframe, before it closes the panel.
   const closeMission = useCallback(() => {
     const store = useMissionStore.getState();
     if (store.placing !== null) store.setPlacing(null);
+    else if (store.selected?.key != null) store.select({ ...store.selected, key: null });
     else setMissionOpen(false);
   }, []);
   const startTour = useCallback(() => {
@@ -338,12 +346,15 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
       {editable && (
         <MissionPanel
           open={missionOpen}
-          onClose={closeMission}
+          onClose={hideMission}
+          onEscape={closeMission}
           project={project}
           mission={show.mission}
           plan={plan}
           update={show.update}
           remove={show.remove}
+          undo={show.undo}
+          redo={show.redo}
           onPreviewStage={show.preview}
         />
       )}

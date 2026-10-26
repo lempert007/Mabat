@@ -162,7 +162,10 @@ export function SceneTimeline({ plan, mission, update }: SceneTimelineProps) {
               x={x}
               leaves={leavesOf(actor)}
               ridingLabel={ridingLabel(actor)}
+              chosen={selected?.actor === actor.id}
               selectedKey={selected?.actor === actor.id ? selected.key : null}
+              onChoose={() => useMissionStore.getState().select({ actor: actor.id, key: null })}
+              onView={(key) => editor.viewKey(actor, key)}
               onGrab={grab}
               onNudge={(key, by) => nudge(actor, key, by)}
               onRemove={(key) => editor.changeActor(actor.id, (current) => removeKey(current, key))}

@@ -9,6 +9,8 @@ import { t } from '@/i18n/he';
 interface DraggablePanelProps {
   open: boolean;
   onClose: () => void;
+  /** Escape, where it should first undo something smaller than closing. Defaults to `onClose`. */
+  onEscape?: () => void;
   title: string;
   /** Identifies the panel so it reopens where the user last left it. */
   storageKey: string;
@@ -25,17 +27,17 @@ interface DraggablePanelProps {
  * Only opacity is animated here. The element's transform belongs to the drag hook, and two
  * owners writing the same property would fight each other mid-drag.
  */
-export function DraggablePanel({ open, onClose, title, storageKey, children, footer, side = 'start' }: DraggablePanelProps) {
+export function DraggablePanel({ open, onClose, onEscape = onClose, title, storageKey, children, footer, side = 'start' }: DraggablePanelProps) {
   const { setElement, onHandlePointerDown } = useDraggable(storageKey);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onEscape();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  }, [open, onEscape]);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[90]">

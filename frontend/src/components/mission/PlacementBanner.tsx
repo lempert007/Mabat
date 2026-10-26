@@ -3,7 +3,7 @@ import { MousePointerClick, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IconButton } from '@/components/ui/IconButton';
 import { Kbd } from '@/components/ui/Kbd';
-import { isTracing, useMissionStore, type PlaceTarget } from '@/store/missionStore';
+import { isTracing, selectSceneOpen, useMissionStore, type PlaceTarget } from '@/store/missionStore';
 import { actorName } from '@/lib/mission/names';
 import { fill } from '@/lib/interpolate';
 import { cn } from '@/lib/cn';
@@ -33,8 +33,7 @@ export function PlacementBanner({ mission, onUndo }: PlacementBannerProps) {
   const placing = useMissionStore((s) => s.placing);
   const setPlacing = useMissionStore((s) => s.setPlacing);
   const tracing = isTracing(placing);
-  // The ground's timeline fills the bottom of the screen while it is open.
-  const sceneOpen = useMissionStore((s) => s.editing && s.tab === 'scene');
+  const sceneOpen = useMissionStore(selectSceneOpen);
 
   return (
     <AnimatePresence>

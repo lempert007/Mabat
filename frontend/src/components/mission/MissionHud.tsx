@@ -2,7 +2,7 @@ import { StageCard } from './StageCard';
 import { TelemetryPanel } from './TelemetryPanel';
 import { MissionPlayer } from './MissionPlayer';
 import { ViewerBottomBar } from '@/components/viewer/ViewerBottomBar';
-import { useMissionStore } from '@/store/missionStore';
+import { selectSceneOpen, useMissionStore } from '@/store/missionStore';
 import type { MissionChange } from '@/hooks/useMissionSettings';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission } from '@/types/api';
@@ -20,8 +20,8 @@ interface MissionHudProps {
 
 /** What the audience reads while the mission plays: the narration, the readout and the player. */
 export function MissionHud({ plan, mission, stage, onStep, telemetryHidden, update }: MissionHudProps) {
-  // The ground's timeline takes the room the narration sits in while it is open.
-  const sceneOpen = useMissionStore((s) => s.editing && s.tab === 'scene');
+  // The ground's timeline takes the room the narration sits in.
+  const sceneOpen = useMissionStore(selectSceneOpen);
   return (
     <>
       {!sceneOpen && <StageCard plan={plan} mission={mission} current={stage} />}

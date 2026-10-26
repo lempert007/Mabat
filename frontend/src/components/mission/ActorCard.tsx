@@ -1,4 +1,5 @@
-import { ChevronDown, PenLine, Trash2 } from 'lucide-react';
+import { ChevronDown, Crosshair, PenLine, Trash2 } from 'lucide-react';
+import { IconButton } from '@/components/ui/IconButton';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Field } from '@/components/ui/Field';
@@ -14,7 +15,7 @@ import { KeyRow } from './KeyRow';
 import { KIND_ICONS } from './actorMeta';
 import { actorTarget, useMissionStore } from '@/store/missionStore';
 import { ACTOR_KINDS, ACTOR_PRESETS } from '@/lib/mission/defaults';
-import { legSpeed, removeKey, retimeKey, setHold, setLeaves, setLift } from '@/lib/mission/keys';
+import { facingAt, legSpeed, removeKey, setLeaves } from '@/lib/mission/keys';
 import { actorName } from '@/lib/mission/names';
 import { counted } from '@/lib/counted';
 import { fill } from '@/lib/interpolate';
@@ -60,6 +61,7 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
   const selected = useMissionStore((s) => s.selected);
   const placing = useMissionStore((s) => s.placing);
   const open = selected?.actor === actor.id;
+  const following = useMissionStore((s) => open && s.camera === 'follow');
   const target = actorTarget(placing);
   const tracing = target?.actor === actor.id && target.key === undefined;
   const Icon = KIND_ICONS[actor.kind];
@@ -91,7 +93,7 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
 
   const changeKind = (kind: ActorKind) => {
     const preset = ACTOR_PRESETS[kind];
-    change({ kind, size: preset.size, color: preset.color, turns: preset.turns });
+    change({ kind, size: preset.size, color: preset.color, turns: preset.turns, followsSurface: preset.followsSurface });
   };
 
   return (
@@ -183,6 +185,13 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
             <span className="text-[13px] text-fg-2">{copy.turns}</span>
             <Switch label={copy.turns} checked={actor.turns} onChange={(turns) => change({ turns })} />
           </div>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] text-fg-2">{copy.followsSurface}</span>
+              <Switch label={copy.followsSurface} checked={actor.followsSurface} onChange={(followsSurface) => change({ followsSurface })} />
+            </div>
+            <p className="text-[12px] leading-snug text-fg-3">{copy.followsSurfaceHint}</p>
+          </div>
 
           {keysShown && (
             <div className="flex flex-col gap-1.5">
@@ -195,6 +204,7 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
                   selected={selected?.key === k}
                   moving={target?.actor === actor.id && target.key === k}
                   pace={legSpeed(plan, index, k)}
+                  facing={facingAt(plan, index, k)}
                   onSelect={() => editor.selectKey(actor, selected?.key === k ? null : k)}
                   onView={() => editor.viewKey(actor, k)}
                   onMove={() => {
@@ -205,9 +215,7 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
                     useMissionStore.getState().select({ actor: actor.id, key: null });
                     change((current) => removeKey(current, k));
                   }}
-                  onRetime={(at) => change((current) => retimeKey(current, k, at))}
-                  onLift={(lift) => change((current) => setLift(current, k, lift))}
-                  onHold={(hold) => change((current) => setHold(current, k, hold))}
+                  onEdit={change}
                 />
               ))}
               <Button size="sm" variant={tracing ? 'primary' : 'secondary'} icon={<PenLine size={14} />} onClick={trace} className="mt-1 self-start">
@@ -216,9 +224,19 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
             </div>
           )}
 
-          <Button size="sm" variant="ghost" icon={<Trash2 size={14} />} onClick={onRemove} className="self-start text-danger hover:text-danger">
-            {copy.remove}
-          </Button>
+          <div className="flex items-center justify-between">
+            <Button size="sm" variant="ghost" icon={<Trash2 size={14} />} onClick={onRemove} className="text-danger hover:text-danger">
+              {copy.remove}
+            </Button>
+            <IconButton
+              label={copy.follow}
+              size="sm"
+              active={following}
+              onClick={() => useMissionStore.getState().setCamera(following ? 'free' : 'follow')}
+            >
+              <Crosshair size={15} />
+            </IconButton>
+          </div>
         </div>
       )}
     </div>

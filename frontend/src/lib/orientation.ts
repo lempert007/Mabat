@@ -65,7 +65,10 @@ export function turnMission(mission: Mission, from: Quaternion | null, to: Quate
     drop: mission.drop && turn(mission.drop),
     hover: mission.hover && turn(mission.hover),
     waypoints: mission.waypoints.map(turn),
-    actors: mission.actors.map((actor) => ({ ...actor, keys: actor.keys.map((key) => ({ ...key, place: turn(key.place) })) })),
+    actors: mission.actors.map((actor) => ({
+      ...actor,
+      keys: actor.keys.map((key) => ({ ...key, place: turn(key.place), normal: key.normal && turn(key.normal) })),
+    })),
     noise: mission.noise.map((zone) => ({ ...zone, points: zone.points.map(turn) })),
   };
 }

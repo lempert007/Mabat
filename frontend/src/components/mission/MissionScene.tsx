@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import type { Group } from 'three';
 import { MissionClock } from './MissionClock';
 import { MissionDirector } from './MissionDirector';
+import { CursorPivot } from './CursorPivot';
 import { VehicleModel } from './VehicleModel';
 import { CarrierModel } from './CarrierModel';
 import { VehicleTag } from './VehicleTag';
@@ -77,6 +78,7 @@ export function MissionScene({ project, mission, plan }: MissionSceneProps) {
       {editing && <MissionHandles mission={mission} plan={plan} color={MARKER_COLOR} />}
       {editing && <ActorPaths plan={plan} />}
       <MissionDirector plan={plan} mission={mission} />
+      <CursorPivot />
     </>
   );
 }

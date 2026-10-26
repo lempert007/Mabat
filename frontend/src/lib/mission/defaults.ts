@@ -28,10 +28,13 @@ export const ACTOR_KINDS: ActorKind[] = ['drone', 'rover', 'parcel'];
  * metres per second, and `lift` how high a new one is set, so a rover drives and a drone flies
  * without the editor having to say so.
  */
-export const ACTOR_PRESETS: Record<ActorKind, { size: number; color: string; speed: number; lift: number; turns: boolean }> = {
-  drone: { size: 0.8, color: '#34c76f', speed: 4, lift: 6, turns: true },
-  rover: { size: 0.9, color: '#e8ecf2', speed: 1.4, lift: 0, turns: true },
-  parcel: { size: 0.45, color: '#c9a27a', speed: 0.8, lift: 0, turns: false },
+export const ACTOR_PRESETS: Record<
+  ActorKind,
+  { size: number; color: string; speed: number; lift: number; turns: boolean; followsSurface: boolean }
+> = {
+  drone: { size: 0.8, color: '#34c76f', speed: 4, lift: 6, turns: true, followsSurface: false },
+  rover: { size: 0.9, color: '#e8ecf2', speed: 1.4, lift: 0, turns: true, followsSurface: true },
+  parcel: { size: 0.45, color: '#c9a27a', speed: 0.8, lift: 0, turns: false, followsSurface: true },
 };
 
 /** One colour per actor, for its path on the model and its row on the timeline. */
@@ -54,6 +57,7 @@ export function newActor(kind: ActorKind, rides: string | null, taken: string[] 
     leaves: 0,
     staysHooked: false,
     turns: preset.turns,
+    followsSurface: preset.followsSurface,
     keys: [],
   };
 }

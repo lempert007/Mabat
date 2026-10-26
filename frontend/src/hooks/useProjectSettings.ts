@@ -6,6 +6,7 @@ import { deepEqual } from '@/lib/deepEqual';
 import { errorMessage } from '@/lib/errorMessage';
 import { turnMission, turnPoints } from '@/lib/orientation';
 import { toast } from '@/store/toastStore';
+import { useMissionStore } from '@/store/missionStore';
 import { useDebouncedCallback } from './useDebouncedCallback';
 import type { Poi, Project, ProjectSettings } from '@/types/api';
 
@@ -50,6 +51,8 @@ export function useProjectSettings(project: Project) {
           pois && turnPoints(pois, previous.modelRotation, next.modelRotation),
         );
         if (next.mission) next.mission = turnMission(next.mission, previous.modelRotation, next.modelRotation);
+        // Earlier versions of the mission stand where the model used to be.
+        useMissionStore.getState().clearHistory();
       }
       settingsRef.current = next;
       queryClient.setQueryData<Project>(queryKeys.project(project.id), (current) =>

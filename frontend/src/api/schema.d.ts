@@ -490,6 +490,11 @@ export interface components {
              * @default true
              */
             turns?: boolean;
+            /**
+             * Followssurface
+             * @default true
+             */
+            followsSurface?: boolean;
             /** Keys */
             keys?: components["schemas"]["Keyframe-Input"][];
         };
@@ -547,6 +552,11 @@ export interface components {
              * @default true
              */
             turns: boolean;
+            /**
+             * Followssurface
+             * @default true
+             */
+            followsSurface: boolean;
             /** Keys */
             keys: components["schemas"]["Keyframe-Output"][];
         };
@@ -878,12 +888,13 @@ export interface components {
         };
         /**
          * Keyframe
-         * @description Where an actor is at one moment: it arrives, waits, and moves on to the next.
+         * @description Where an actor is at one moment, and which way it faces: it arrives, waits, moves on.
          */
         "Keyframe-Input": {
             /** At */
             at: number;
             place: components["schemas"]["Vec3"];
+            normal?: components["schemas"]["Vec3"] | null;
             /**
              * Lift
              * @default 0
@@ -894,15 +905,28 @@ export interface components {
              * @default 0
              */
             hold?: number;
+            /** Heading */
+            heading?: number | null;
+            /**
+             * Pitch
+             * @default 0
+             */
+            pitch?: number;
+            /**
+             * Roll
+             * @default 0
+             */
+            roll?: number;
         };
         /**
          * Keyframe
-         * @description Where an actor is at one moment: it arrives, waits, and moves on to the next.
+         * @description Where an actor is at one moment, and which way it faces: it arrives, waits, moves on.
          */
         "Keyframe-Output": {
             /** At */
             at: number;
             place: components["schemas"]["Vec3"];
+            normal: components["schemas"]["Vec3"] | null;
             /**
              * Lift
              * @default 0
@@ -913,6 +937,18 @@ export interface components {
              * @default 0
              */
             hold: number;
+            /** Heading */
+            heading: number | null;
+            /**
+             * Pitch
+             * @default 0
+             */
+            pitch: number;
+            /**
+             * Roll
+             * @default 0
+             */
+            roll: number;
         };
         /** LinkBlock */
         "LinkBlock-Input": {

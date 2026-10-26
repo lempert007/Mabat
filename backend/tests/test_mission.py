@@ -14,6 +14,7 @@ from app.services import mission_models
 from tests.test_transfer import make_project
 
 DROP = {"x": 12.0, "y": 0.5, "z": -4.0}
+WALL = {"x": 1.0, "y": 0.0, "z": 0.0}
 
 
 def box_model() -> bytes:
@@ -27,7 +28,7 @@ def rover(**fields) -> dict:
         "size": 0.9,
         "keys": [
             {"at": 4, "place": DROP, "hold": 2},
-            {"at": 9, "place": {**DROP, "x": 20.0}},
+            {"at": 9, "place": {**DROP, "x": 20.0}, "normal": WALL, "heading": -90, "roll": 15},
         ],
         **fields,
     }
@@ -77,7 +78,19 @@ async def test_a_mission_reads_back_as_it_was_saved(client):
     assert mission["stages"] == stages
     assert mission["noise"] == noise
     assert [actor["id"] for actor in mission["actors"]] == ["rover", "box"]
-    assert mission["actors"][0]["keys"][0] == {"at": 4, "place": DROP, "lift": 0, "hold": 2}
+    first, wall = mission["actors"][0]["keys"]
+    assert first == {
+        "at": 4,
+        "place": DROP,
+        "normal": None,
+        "lift": 0,
+        "hold": 2,
+        "heading": None,
+        "pitch": 0,
+        "roll": 0,
+    }
+    assert (wall["normal"], wall["heading"], wall["roll"]) == (WALL, -90, 15)
+    assert mission["actors"][0]["followsSurface"] is True
     assert mission["actors"][1]["rides"] == "rover"
     # Whatever the editor did not send comes back as the default the interface starts from.
     assert mission["cruiseAltitude"] == 90
@@ -109,6 +122,9 @@ async def test_a_mission_out_of_bounds_is_refused(client):
         await save_mission(client, project, actors=[rover(), rover()]),
         await save_mission(client, project, actors=[rover(), rover(id="other")]),
         await save_mission(client, project, actors=[rover(rides="ghost")]),
+        await save_mission(
+            client, project, actors=[rover(keys=[{"at": 1, "place": DROP, "heading": 270}])]
+        ),
         await save_mission(
             client, project, actors=[rover(rides="b"), {"id": "b", "rides": "rover"}]
         ),

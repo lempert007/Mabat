@@ -18,7 +18,11 @@ interface TimelineLaneProps {
   leaves: number | null;
   /** What it rides until then, for the bar. */
   ridingLabel: string | null;
+  /** This actor is the one open in the panel. */
+  chosen: boolean;
   selectedKey: number | null;
+  onChoose: () => void;
+  onView: (key: number) => void;
   onGrab: (grip: Grip, event: PointerEvent<HTMLElement>) => void;
   onNudge: (key: number, by: number) => void;
   onRemove: (key: number) => void;
@@ -31,7 +35,8 @@ const copy = t.mission.scene;
  * each wait, and a diamond on each keyframe. Diamonds, the ends of waits and the moment a rider
  * gets off can all be dragged; a focused diamond also moves with the arrow keys.
  */
-export function TimelineLane({ actor, name, color, x, leaves, ridingLabel, selectedKey, onGrab, onNudge, onRemove }: TimelineLaneProps) {
+export function TimelineLane(props: TimelineLaneProps) {
+  const { actor, name, color, x, leaves, ridingLabel, chosen, selectedKey, onChoose, onView, onGrab, onNudge, onRemove } = props;
   const start = leaves ?? (actor.rides === null ? actor.keys[0]?.at : 0) ?? 0;
 
   const onKey = (key: number) => (event: KeyboardEvent<HTMLButtonElement>) => {
@@ -44,11 +49,17 @@ export function TimelineLane({ actor, name, color, x, leaves, ridingLabel, selec
   };
 
   return (
-    <div className="flex h-7 items-center gap-2">
-      <span dir="auto" className="flex w-28 shrink-0 items-center gap-1.5 truncate text-[12px] text-fg-2">
+    <div className={cn('flex h-7 items-center gap-2 rounded-md', chosen && 'bg-white/5')}>
+      <button
+        type="button"
+        dir="auto"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={onChoose}
+        className={cn('flex w-28 shrink-0 items-center gap-1.5 truncate rounded-md px-1 text-start text-[12px] focus-ring', chosen ? 'font-medium text-fg' : 'text-fg-2 hover:text-fg')}
+      >
         <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: color }} />
         <span className="truncate">{name}</span>
-      </span>
+      </button>
       <div className="relative h-full flex-1">
         <span className="absolute inset-x-0 top-1/2 h-px bg-white/8" />
 
@@ -98,6 +109,7 @@ export function TimelineLane({ actor, name, color, x, leaves, ridingLabel, selec
             title={fill(copy.cue, { index: k + 1, time: formatCue(key.at) })}
             onPointerDown={(event) => onGrab({ actor: actor.id, key: k, part: 'key' }, event)}
             onKeyDown={onKey(k)}
+            onDoubleClick={() => onView(k)}
             className={cn(
               'absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rotate-45 cursor-grab touch-none rounded-[2px] border transition-[scale] duration-150 hover:scale-125 focus-ring active:cursor-grabbing',
               selectedKey === k ? 'scale-125 border-white' : 'border-black/40',

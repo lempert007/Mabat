@@ -1,12 +1,13 @@
-import type { Vector3 } from 'three';
+import type { Quaternion, Vector3 } from 'three';
 import type { Track } from './track';
-import type { Actor, ActorKind, StageKind } from '@/types/api';
+import type { Actor, StageKind } from '@/types/api';
 
 /** One actor at one moment. */
 export interface ActorPose {
   /** The centre of its model, world space. */
   position: Vector3;
-  heading: number;
+  /** How it stands: square to its surface, facing its way, leaning as its keyframes say. */
+  quaternion: Quaternion;
   /** Distance covered on its own, world units, for turning a rover's wheels. */
   travelled: number;
   /** 0 to 1: how hard a drone's rotors are working. */
@@ -66,7 +67,6 @@ export type ModelHeights = Record<string, number>;
 /** One actor as the plan resolved it. */
 export interface CastMember {
   actor: Actor;
-  kind: ActorKind;
   /** Its size, its longest side, and half its height, world units. */
   size: number;
   half: number;
