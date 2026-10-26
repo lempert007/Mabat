@@ -22,7 +22,7 @@ export function App() {
           <Route path="/" element={<RequireSession>{(session) => <GalleryPage session={session} />}</RequireSession>} />
           <Route
             path="/p/:projectId"
-            element={<RequireSession autoGuest>{(session) => <ViewerRoute session={session} />}</RequireSession>}
+            element={<RequireSession>{(session) => <ViewerRoute session={session} />}</RequireSession>}
           />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

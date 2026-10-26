@@ -12,11 +12,21 @@ export type ShowcaseView = 'explore' | 'mission';
  */
 export type CameraMode = 'cinematic' | 'follow' | 'free';
 
+/** A noise contour being traced point by point, or one of its points being moved. */
+export interface NoiseTarget {
+  zone: number;
+  vertex?: number;
+}
+
 /**
- * What the editor's next click on the model places. New waypoints keep coming until stopped;
- * a number moves the waypoint at that index.
+ * What the editor's next click on the model places. New waypoints, like the points of a noise
+ * contour, keep coming until stopped; a number moves the waypoint at that index.
  */
-export type PlaceTarget = 'drop' | 'hover' | 'hub' | 'waypoint' | number;
+export type PlaceTarget = 'drop' | 'hover' | 'hub' | 'waypoint' | number | NoiseTarget;
+
+/** The placements that add point after point, where the last one can be taken back. */
+export const isTracing = (target: PlaceTarget | null) =>
+  target === 'waypoint' || (typeof target === 'object' && target !== null && target.vertex === undefined);
 
 export const PLAYBACK_RATES = [0.5, 1, 2, 4];
 
@@ -39,6 +49,8 @@ interface MissionState {
   editing: boolean;
   /** How tall each drone model turned out, as a fraction of its size. Built-in until measured. */
   heights: Record<VehicleSlot, number>;
+  /** The noise contours are drawn on the ground. Off until someone asks for them. */
+  noiseShown: boolean;
 
   setView: (view: ShowcaseView) => void;
   /** Opens the mission from its first moment, playing, with the director at the camera. */
@@ -55,6 +67,7 @@ interface MissionState {
   setPlacing: (placing: PlaceTarget | null) => void;
   setEditing: (editing: boolean) => void;
   setHeight: (slot: VehicleSlot, height: number) => void;
+  setNoiseShown: (shown: boolean) => void;
   reset: () => void;
 }
 
@@ -69,6 +82,7 @@ const initialState = {
   placing: null as PlaceTarget | null,
   editing: false,
   heights: BUILT_IN_HEIGHT,
+  noiseShown: false,
 };
 
 /** The stage a moment belongs to. A moment exactly on a boundary starts the next stage. */
@@ -100,9 +114,12 @@ export const useMissionStore = create<MissionState>((set, get) => ({
   setCamera: (camera) => set({ camera }),
   setStepwise: (stepwise) => set({ stepwise }),
   setLoopStage: (loopStage) => set({ loopStage }),
-  // Aiming at a moving picture is hopeless, so placing anything stills the camera.
-  setPlacing: (placing) => set(placing === null ? { placing } : { placing, camera: 'free' }),
+  // Aiming at a moving picture is hopeless, so placing anything stills the camera. Tracing a
+  // noise contour blind would be just as hopeless, so it brings the noise map up.
+  setPlacing: (placing) =>
+    set(placing === null ? { placing } : { placing, camera: 'free', ...(typeof placing === 'object' && { noiseShown: true }) }),
   setEditing: (editing) => set({ editing, placing: editing ? get().placing : null }),
   setHeight: (slot, height) => set((state) => ({ heights: { ...state.heights, [slot]: height } })),
+  setNoiseShown: (noiseShown) => set({ noiseShown }),
   reset: () => set({ ...initialState }),
 }));

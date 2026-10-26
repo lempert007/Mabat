@@ -13,25 +13,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Login */
+        /**
+         * Login
+         * @description Editors sign in with their own account, viewers with the shared guest account.
+         */
         post: operations["login_api_auth_login_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/auth/guest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Join As Guest */
-        post: operations["join_as_guest_api_auth_guest_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -867,6 +853,8 @@ export interface components {
             stages?: {
                 [key: string]: components["schemas"]["StageText-Input"];
             };
+            /** Noise */
+            noise?: components["schemas"]["NoiseZone-Input"][];
         };
         /** Mission */
         "Mission-Output": {
@@ -927,6 +915,8 @@ export interface components {
             stages: {
                 [key: string]: components["schemas"]["StageText-Output"];
             };
+            /** Noise */
+            noise: components["schemas"]["NoiseZone-Output"][];
         };
         /** ModelStats */
         ModelStats: {
@@ -952,6 +942,32 @@ export interface components {
                 number,
                 number
             ] | null;
+        };
+        /**
+         * NoiseZone
+         * @description Where the flight can be heard, traced on the ground from an acoustic study.
+         */
+        "NoiseZone-Input": {
+            /**
+             * Label
+             * @default
+             */
+            label?: string;
+            /** Points */
+            points?: components["schemas"]["Vec3"][];
+        };
+        /**
+         * NoiseZone
+         * @description Where the flight can be heard, traced on the ground from an acoustic study.
+         */
+        "NoiseZone-Output": {
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+            /** Points */
+            points: components["schemas"]["Vec3"][];
         };
         /** PoiCreate */
         PoiCreate: {
@@ -1623,26 +1639,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    join_as_guest_api_auth_guest_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SessionOut"];
                 };
             };
         };

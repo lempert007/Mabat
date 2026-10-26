@@ -1,5 +1,6 @@
 import { CircleCheck } from 'lucide-react';
 import { TelemetryReading } from './TelemetryReading';
+import { NoiseLegend } from './NoiseLegend';
 import { useMissionStore } from '@/store/missionStore';
 import { telemetryAt } from '@/lib/mission/telemetry';
 import { formatClock, formatMeasure } from '@/lib/format';
@@ -19,6 +20,7 @@ export function TelemetryPanel({ plan, mission }: { plan: MissionPlan; mission: 
   const reading = telemetryAt(plan, time);
   const tether = Math.min(reading.payout / mission.tetherLength, 1);
   const delivered = time >= plan.deliveredAt;
+  const noiseShown = useMissionStore((s) => s.noiseShown);
 
   return (
     <aside className="pointer-events-none absolute end-4 top-20 z-20 hidden w-[232px] flex-col gap-3 rounded-2xl glass px-4 py-3.5 md:flex">
@@ -55,6 +57,7 @@ export function TelemetryPanel({ plan, mission }: { plan: MissionPlan; mission: 
           </>
         )}
       </footer>
+      {noiseShown && <NoiseLegend mission={mission} />}
     </aside>
   );
 }

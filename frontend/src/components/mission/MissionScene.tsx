@@ -13,6 +13,7 @@ import { HoverMarker } from './HoverMarker';
 import { GroundShadows } from './GroundShadows';
 import { MissionHandles } from './MissionHandles';
 import { MissionBackdrop } from './MissionBackdrop';
+import { NoiseMap } from './NoiseMap';
 import { missionLive } from '@/store/missionLive';
 import { useMissionStore } from '@/store/missionStore';
 import type { MissionPlan } from '@/lib/mission/types';
@@ -40,6 +41,7 @@ export function MissionScene({ project, mission, plan }: MissionSceneProps) {
   const droid = useRef<Group>(null);
   const parcel = useRef<Group>(null);
   const editing = useMissionStore((s) => s.editing);
+  const noiseShown = useMissionStore((s) => s.noiseShown);
   const legs = (2 * plan.halfHeight.droid + 2 * plan.halfHeight.parcel + 0.05 * plan.unitsPerMeter) / plan.size.carrier;
   const name = (slot: 'carrier' | 'droid') => mission[slot].name || t.mission.vehicles[slot];
 
@@ -81,6 +83,7 @@ export function MissionScene({ project, mission, plan }: MissionSceneProps) {
       <HoverMarker plan={plan} color={MARKER_COLOR} />
       {plan.hub && <HubPad at={plan.hub} unitsPerMeter={plan.unitsPerMeter} color={MARKER_COLOR} />}
       <GroundShadows plan={plan} />
+      {noiseShown && <NoiseMap mission={mission} plan={plan} editing={editing} />}
       {editing && <MissionHandles mission={mission} plan={plan} color={MARKER_COLOR} />}
       <MissionDirector plan={plan} mission={mission} />
     </>

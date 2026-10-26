@@ -1,9 +1,10 @@
 import { motion } from 'framer-motion';
-import { Clapperboard, Crosshair, Move3d, Pause, Play, Presentation, Repeat, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { AudioLines, Clapperboard, Crosshair, Move3d, Pause, Play, Presentation, Repeat, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { StageTimeline } from './StageTimeline';
 import { PLAYBACK_RATES, useMissionStore, type CameraMode } from '@/store/missionStore';
 import { formatClock } from '@/lib/format';
+import { isClosed } from '@/lib/mission/noise';
 import { cn } from '@/lib/cn';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission } from '@/types/api';
@@ -34,7 +35,9 @@ export function MissionPlayer({ plan, mission, current, onStep }: MissionPlayerP
   const camera = useMissionStore((s) => s.camera);
   const stepwise = useMissionStore((s) => s.stepwise);
   const loopStage = useMissionStore((s) => s.loopStage);
-  const { play, pause, setRate, setCamera, setStepwise, setLoopStage } = useMissionStore.getState();
+  const noiseShown = useMissionStore((s) => s.noiseShown);
+  const { play, pause, setRate, setCamera, setStepwise, setLoopStage, setNoiseShown } = useMissionStore.getState();
+  const hasNoise = mission.noise.some(isClosed);
   const finished = time >= plan.duration - 1e-3;
 
   return (
@@ -69,6 +72,11 @@ export function MissionPlayer({ plan, mission, current, onStep }: MissionPlayerP
         </span>
 
         <span className="ms-auto flex items-center gap-1">
+          {hasNoise && (
+            <IconButton label={t.mission.noise.layer} size="sm" active={noiseShown} onClick={() => setNoiseShown(!noiseShown)}>
+              <AudioLines size={15} />
+            </IconButton>
+          )}
           <span className="hidden sm:contents">
             <IconButton label={t.mission.loopStage} size="sm" active={loopStage} onClick={() => setLoopStage(!loopStage)}>
               <Repeat size={15} />

@@ -45,10 +45,28 @@ async def test_a_visitor_without_a_session_is_turned_away(anonymous_client):
     assert (await anonymous_client.get("/auth/me")).status_code == 401
 
 
-async def test_guests_may_start_their_own_session(anonymous_client):
-    assert (await anonymous_client.post("/auth/guest")).status_code == 200
+async def test_guests_sign_in_with_the_shared_guest_account(anonymous_client):
+    response = await anonymous_client.post(
+        "/auth/login", json={"username": "guest", "password": "watch-only"}
+    )
+    assert response.status_code == 200
     session = await anonymous_client.get("/auth/me")
     assert session.json()["role"] == "guest"
+
+
+async def test_the_guest_account_needs_its_password(anonymous_client):
+    response = await anonymous_client.post(
+        "/auth/login", json={"username": "guest", "password": "not-it"}
+    )
+    assert response.status_code == 401
+    assert (await anonymous_client.post("/auth/guest")).status_code == 404
+
+
+async def test_changing_the_guest_password_signs_guests_out(guest_client, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "guest_password", "a-new-one")
+    assert (await guest_client.get("/projects")).status_code == 401
 
 
 async def test_wrong_password_is_refused(anonymous_client):

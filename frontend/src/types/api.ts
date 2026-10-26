@@ -35,6 +35,7 @@ export type EnvironmentPreset = ProjectSettings['environment'];
 export type Mission = Schemas['Mission-Output'];
 export type Vehicle = Schemas['Vehicle-Output'];
 export type StageText = Schemas['StageText-Output'];
+export type NoiseZone = Schemas['NoiseZone-Output'];
 export type CameraShot = NonNullable<StageText['shot']>;
 export type VehicleSlot = keyof Project['vehicles'];
 /** The keys of `Mission.stages`. OpenAPI states them, but the generator types the map by string. */

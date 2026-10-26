@@ -33,9 +33,10 @@ async def test_a_new_project_has_no_mission_and_no_drone_models(client):
 async def test_a_mission_reads_back_as_it_was_saved(client):
     project = await make_project(client, "delivery")
     stages = {"lower": {"title": "Down it goes", "caption": "Gently.", "shot": "ground"}}
+    noise = [{"label": "45 dB", "points": [DROP, {**DROP, "x": 40.0}, {**DROP, "z": 30.0}]}]
 
     response = await save_mission(
-        client, project, drop=DROP, tetherLength=95, waypoints=[DROP], stages=stages
+        client, project, drop=DROP, tetherLength=95, waypoints=[DROP], stages=stages, noise=noise
     )
 
     assert response.status_code == 200
@@ -44,6 +45,7 @@ async def test_a_mission_reads_back_as_it_was_saved(client):
     assert mission["tetherLength"] == 95
     assert mission["waypoints"] == [DROP]
     assert mission["stages"] == stages
+    assert mission["noise"] == noise
     # Whatever the editor did not send comes back as the default the interface starts from.
     assert mission["cruiseAltitude"] == 90
     assert mission["carrier"]["size"] == 3.6
@@ -57,6 +59,7 @@ async def test_a_mission_out_of_bounds_is_refused(client):
         await save_mission(client, project, cruiseSpeed=0),
         await save_mission(client, project, stages={"teleport": {"title": "?"}}),
         await save_mission(client, project, carrier={"size": 3, "color": "blue"}),
+        await save_mission(client, project, noise=[{"points": []}] * 9),
     ]
 
     assert [r.status_code for r in responses] == [422] * len(responses)

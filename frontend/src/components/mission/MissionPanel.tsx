@@ -8,6 +8,7 @@ import { RouteTab } from './RouteTab';
 import { FlightTab } from './FlightTab';
 import { FleetTab } from './FleetTab';
 import { StagesTab } from './StagesTab';
+import { NoiseTab } from './NoiseTab';
 import { useMissionStore } from '@/store/missionStore';
 import { newMission } from '@/lib/mission/defaults';
 import { formatClock } from '@/lib/format';
@@ -16,7 +17,9 @@ import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission, Project } from '@/types/api';
 import { t } from '@/i18n/he';
 
-type Tab = 'route' | 'flight' | 'fleet' | 'stages';
+type Tab = 'route' | 'flight' | 'fleet' | 'stages' | 'noise';
+
+const TABS: Tab[] = ['route', 'flight', 'fleet', 'stages', 'noise'];
 
 interface MissionPanelProps {
   open: boolean;
@@ -83,12 +86,13 @@ export function MissionPanel({ open, onClose, project, mission, plan, update, re
               size="sm"
               value={tab}
               onChange={setTab}
-              options={(['route', 'flight', 'fleet', 'stages'] as Tab[]).map((value) => ({ value, label: copy.tabs[value] }))}
+              options={TABS.map((value) => ({ value, label: copy.tabs[value] }))}
             />
             {tab === 'route' && <RouteTab project={project} mission={shown} plan={plan} update={update} />}
             {tab === 'flight' && <FlightTab mission={shown} plan={plan} update={update} />}
             {tab === 'fleet' && <FleetTab project={project} mission={shown} update={update} />}
             {tab === 'stages' && <StagesTab plan={plan} mission={shown} update={update} onPreview={onPreviewStage} />}
+            {tab === 'noise' && <NoiseTab mission={shown} update={update} />}
           </div>
         )}
       </DraggablePanel>

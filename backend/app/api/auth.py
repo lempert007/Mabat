@@ -1,3 +1,5 @@
+from secrets import compare_digest
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,21 +26,28 @@ def _set_cookie(response: Response, token: str) -> None:
     )
 
 
+def _is_guest(data: LoginRequest) -> bool:
+    settings = get_settings()
+    return bool(settings.guest_password) and data.username == settings.guest_username
+
+
 @router.post("/login", response_model=SessionOut)
 async def login(
     data: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)
 ) -> SessionOut:
+    """Editors sign in with their own account, viewers with the shared guest account."""
+    wrong = HTTPException(status.HTTP_401_UNAUTHORIZED, "השם או הסיסמה לא נכונים.")
+    if _is_guest(data):
+        if not compare_digest(data.password.encode(), get_settings().guest_password.encode()):
+            raise wrong
+        _set_cookie(response, create_session_token(Role.GUEST))
+        return SessionOut(role=Role.GUEST)
+
     user = await user_service.authenticate(db, data.username, data.password)
     if user is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "השם או הסיסמה לא נכונים.")
+        raise wrong
     _set_cookie(response, create_session_token(Role.EDITOR, user.id))
     return SessionOut(role=Role.EDITOR, user=UserOut.model_validate(user))
-
-
-@router.post("/guest", response_model=SessionOut)
-async def join_as_guest(response: Response) -> SessionOut:
-    _set_cookie(response, create_session_token(Role.GUEST))
-    return SessionOut(role=Role.GUEST)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)

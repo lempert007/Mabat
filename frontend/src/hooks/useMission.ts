@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useMissionPlan } from './useMissionPlan';
 import { useMissionSettings } from './useMissionSettings';
-import { useMissionStore } from '@/store/missionStore';
+import { isTracing, useMissionStore } from '@/store/missionStore';
 import { useViewerStore } from '@/store/viewerStore';
 import { stageIndexAt } from '@/lib/mission/plan';
 import type { Project, Vec3 } from '@/types/api';
@@ -79,6 +79,16 @@ export function useMission(project: Project) {
         update((current) => ({ waypoints: [...current.waypoints, position] }));
         return;
       }
+      if (typeof target === 'object') {
+        const { zone, vertex } = target;
+        if (vertex !== undefined) store.setPlacing(null);
+        const moved = (points: Vec3[]) =>
+          vertex === undefined ? [...points, position] : points.map((point, i) => (i === vertex ? position : point));
+        update((current) => ({
+          noise: current.noise.map((contour, i) => (i === zone ? { ...contour, points: moved(contour.points) } : contour)),
+        }));
+        return;
+      }
       store.setPlacing(null);
       if (typeof target === 'number') {
         update((current) => ({ waypoints: current.waypoints.map((point, i) => (i === target ? position : point)) }));
@@ -92,10 +102,22 @@ export function useMission(project: Project) {
     [mission?.drop, update, watch],
   );
 
+  /** Takes back the last waypoint or contour point while they are being added. */
+  const undoPlace = useCallback(() => {
+    const target = useMissionStore.getState().placing;
+    if (!isTracing(target)) return;
+    if (target === 'waypoint') update((current) => ({ waypoints: current.waypoints.slice(0, -1) }));
+    else if (typeof target === 'object' && target !== null) {
+      update((current) => ({
+        noise: current.noise.map((contour, i) => (i === target.zone ? { ...contour, points: contour.points.slice(0, -1) } : contour)),
+      }));
+    }
+  }, [update]);
+
   const removeMission = useCallback(() => {
     useMissionStore.getState().setView('explore');
     remove();
   }, [remove]);
 
-  return { plan, mission, visible, stage, update, remove: removeMission, watch, step, togglePlay, preview, place };
+  return { plan, mission, visible, stage, update, remove: removeMission, watch, step, togglePlay, preview, place, undoPlace };
 }

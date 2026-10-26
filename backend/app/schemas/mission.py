@@ -37,6 +37,15 @@ class StageText(ApiModel):
     shot: CameraShot | None = None
 
 
+class NoiseZone(ApiModel):
+    """Where the flight can be heard, traced on the ground from an acoustic study."""
+
+    # What the study calls this contour, such as "45 dB". Empty: the interface numbers it.
+    label: str = Field(default="", max_length=40)
+    # The contour in order around its edge. It closes by itself and needs three points.
+    points: list[Vec3] = Field(default_factory=list, max_length=300)
+
+
 class Mission(ApiModel):
     units_per_meter: float = Field(default=1.0, gt=0, le=1000)
     # Where the carrier takes off and lands. Null: it arrives from beyond the model.
@@ -61,3 +70,4 @@ class Mission(ApiModel):
     droid: Vehicle = Field(default_factory=lambda: Vehicle(size=0.8, color="#34c76f"))
     parcel: Vehicle = Field(default_factory=lambda: Vehicle(size=0.45, color="#c9a27a"))
     stages: dict[StageKind, StageText] = Field(default_factory=dict)
+    noise: list[NoiseZone] = Field(default_factory=list, max_length=8)

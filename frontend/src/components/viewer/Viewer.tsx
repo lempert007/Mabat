@@ -100,6 +100,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
     right: show.visible ? stageForward : nav.prev,
     togglePlay: show.visible ? show.togglePlay : undefined,
     enter: plan ? show.watch : dismissIntro,
+    undoPlace: show.undoPlace,
   });
 
   // The handles for editing are drawn while the panel is open.
@@ -289,7 +290,7 @@ export function Viewer({ project, pois, categories, session }: ViewerProps) {
         editable={editable && !show.visible}
         hint={show.visible ? t.mission.keysHint : undefined}
       />
-      <PlacementBanner />
+      <PlacementBanner onUndo={show.undoPlace} />
 
       <IntroOverlay project={project} onWatch={plan ? show.watch : undefined} />
       <LoadingOverlay />

@@ -43,5 +43,6 @@ export function newMission(unitsPerMeter = 1): Mission {
     droid: vehicle(0.8, '#34c76f'),
     parcel: vehicle(0.45, '#c9a27a'),
     stages: {},
+    noise: [],
   };
 }

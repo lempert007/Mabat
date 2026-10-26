@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     secure_cookies: bool = Field(default=False, alias="MABAT_SECURE_COOKIES")
     initial_editor_username: str | None = Field(default=None, alias="MABAT_INITIAL_EDITOR_USERNAME")
     initial_editor_password: str | None = Field(default=None, alias="MABAT_INITIAL_EDITOR_PASSWORD")
+    # One shared sign-in for viewers. Without a password, nobody can sign in as a guest.
+    guest_username: str = Field(default="guest", alias="MABAT_GUEST_USERNAME")
+    guest_password: str | None = Field(default=None, alias="MABAT_GUEST_PASSWORD")
     cors_origins: list[str] = Field(
         default=["http://localhost:5173", "http://127.0.0.1:5173"], alias="MABAT_CORS_ORIGINS"
     )

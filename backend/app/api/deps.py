@@ -7,7 +7,7 @@ from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
-from app.core.security import Role, decode_session_token
+from app.core.security import Role, decode_session_token, guest_key
 from app.db.session import get_db
 from app.models import User
 from app.services import users as user_service
@@ -38,12 +38,15 @@ async def get_current_session(
         if user is None:
             return None
         return Session(role=role, user=user)
+    key = guest_key()
+    if key is None or payload.get("key") != key:
+        return None
     return Session(role=Role.GUEST)
 
 
 async def require_session(session: Session | None = Depends(get_current_session)) -> Session:
     if session is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "צריך להיכנס, או להמשיך כאורח.")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "צריך להיכנס.")
     return session
 
 

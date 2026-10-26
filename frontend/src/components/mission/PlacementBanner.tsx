@@ -1,15 +1,27 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { MousePointerClick } from 'lucide-react';
+import { MousePointerClick, Undo2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { IconButton } from '@/components/ui/IconButton';
 import { Kbd } from '@/components/ui/Kbd';
-import { useMissionStore } from '@/store/missionStore';
+import { isTracing, useMissionStore, type PlaceTarget } from '@/store/missionStore';
 import { fill } from '@/lib/interpolate';
 import { t } from '@/i18n/he';
 
+const copy = t.mission.placing;
+
+function describe(placing: PlaceTarget): string {
+  if (typeof placing === 'number') return fill(copy.movingWaypoint, { index: placing + 1 });
+  if (typeof placing === 'object') {
+    return placing.vertex === undefined ? copy.noise : fill(copy.movingNoisePoint, { index: placing.vertex + 1 });
+  }
+  return copy[placing];
+}
+
 /** Says what the next click on the model will place, and how to stop. */
-export function PlacementBanner() {
+export function PlacementBanner({ onUndo }: { onUndo: () => void }) {
   const placing = useMissionStore((s) => s.placing);
   const setPlacing = useMissionStore((s) => s.setPlacing);
+  const tracing = isTracing(placing);
 
   return (
     <AnimatePresence>
@@ -22,16 +34,17 @@ export function PlacementBanner() {
           transition={{ duration: 0.25 }}
         >
           <MousePointerClick size={16} className="shrink-0 text-accent-strong" />
-          <span className="text-[13px] font-medium">
-            {typeof placing === 'number'
-              ? fill(t.mission.placing.movingWaypoint, { index: placing + 1 })
-              : t.mission.placing[placing]}
-          </span>
+          <span className="text-[13px] font-medium">{describe(placing)}</span>
           <span className="hidden items-center gap-1 text-[12px] text-fg-4 sm:flex">
-            <Kbd>Esc</Kbd>
+            <Kbd>{tracing ? 'Enter' : 'Esc'}</Kbd>
           </span>
-          <Button size="sm" variant={placing === 'waypoint' ? 'primary' : 'ghost'} onClick={() => setPlacing(null)}>
-            {placing === 'waypoint' ? t.mission.placingDone : t.common.cancel}
+          {tracing && (
+            <IconButton label={t.mission.undoPoint} size="sm" onClick={onUndo}>
+              <Undo2 size={15} />
+            </IconButton>
+          )}
+          <Button size="sm" variant={tracing ? 'primary' : 'ghost'} onClick={() => setPlacing(null)}>
+            {tracing ? t.mission.placingDone : t.common.cancel}
           </Button>
         </motion.div>
       )}

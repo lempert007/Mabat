@@ -18,6 +18,8 @@ import pytest
 _STORAGE = tempfile.mkdtemp(prefix="mabat-tests-")
 os.environ["MABAT_STORAGE_ROOT"] = _STORAGE
 os.environ["MABAT_SECRET_KEY"] = "test-secret-long-enough-for-hmac-sha256"
+os.environ["MABAT_GUEST_USERNAME"] = "guest"
+os.environ["MABAT_GUEST_PASSWORD"] = "watch-only"
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://mabat:change-me@localhost:5432/mabat")
 
 BASE_URL = os.environ["DATABASE_URL"]
@@ -112,7 +114,7 @@ async def guest_client(database: bool) -> AsyncIterator["httpx.AsyncClient"]:  #
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://tests/api") as http:
-        await http.post("/auth/guest")
+        await http.post("/auth/login", json={"username": "guest", "password": "watch-only"})
         yield http
 
     await engine.dispose()

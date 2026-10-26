@@ -24,7 +24,8 @@ stages (section 12).
 ## 2. Roles
 
 - **Editor**: named account, password login. Creates projects, uploads models, places and edits points, manages categories, invites other editors.
-- **Guest**: anonymous, one click. Read-only. Can open share links.
+- **Guest**: one shared account from `MABAT_GUEST_USERNAME` / `MABAT_GUEST_PASSWORD`. Read-only.
+  Guest sessions carry a fingerprint of the password, so changing it signs every guest out.
 
 Sessions are JWTs in an `httpOnly` cookie. Guests get a JWT with `role=guest`.
 
@@ -110,7 +111,6 @@ STORAGE_ROOT/
 
 ```
 POST   /auth/login            {username, password}          → session cookie
-POST   /auth/guest                                          → guest cookie
 POST   /auth/logout
 GET    /auth/me                                             → {role, user?}
 
@@ -173,11 +173,11 @@ Vite + React 18 + TypeScript. One component per file. Feature folders.
 - **Markers**: a DOM overlay whose transforms are written straight from the render loop, never through React state, so moving the camera re-renders nothing. Occlusion costs a raycast per marker, so one marker is re-tested per frame in rotation. Occluded markers fade; the selected one pulses.
 - **Editing panels**: scene settings live in a draggable, backdrop-free panel so the model stays visible and interactive while a setting is being changed. Continuous controls preview instantly through the query cache and save on a debounce.
 - **Camera**: every POI stores a curated camera pose. Selecting a POI flies there with easing. Tour mode plays POIs in order. Double-clicking the model focuses that spot; double-clicking again returns to the view it was called from, and moving to a point or resetting the view retires that return view.
-- **Routes**: `/login`, `/` (gallery), `/p/:projectId` (viewer, `?poi=` deep link). Visiting a share link without a session silently creates a guest session.
+- **Routes**: `/login`, `/` (gallery), `/p/:projectId` (viewer, `?poi=` deep link). Visiting a share link without a session goes to sign-in, then back to the link.
 
 ### Screens
 
-1. **Login**: centered glass card on a dark animated gradient. Password login for editors, "Continue as guest" button.
+1. **Login**: centered glass card on a dark animated gradient. One username and password form; editors and the guest account sign in the same way.
 2. **Gallery**: header with wordmark and user chip. Cards with cover, name, status, POI count. Editors see "New project" and upload with progress.
 3. **Viewer**: full-bleed canvas. Right-clicking a marker offers edit and delete; right-clicking
    the model offers a point at that spot. The right button also pans the camera, so a press is
@@ -329,6 +329,26 @@ clicking the model; waypoints keep coming until Escape. Clicking the first drop 
 mission and starts playing it at once. Every place in the route tab has a button that flies the
 camera down onto it. The flight tab says whether the tether reaches the drop.
 Stage titles and captions fall back to written defaults, and each stage can pick its shot.
+
+### Noise
+
+`mission.noise` holds up to eight contours, each a label (`45 dB`) and the points the editor
+traced on the ground from their acoustic study. The app does not model sound; the study is the
+source of truth and the picture only shows it. Contours are coloured by area, widest and
+quietest first (`lib/mission/noise.ts`, which also measures them and tests a spot for inside).
+
+Each closed contour draws three things (`NoiseContour`): a wash on the ground inside it with
+rings of sound running out from the carrier, a curtain of light standing on its edge, and the
+edge as a line. Both shaders read the mission time, so the rings scrub with the flight, and a
+loudness that rises as the carrier comes within twice the contour's reach. The area wakes as
+the flight arrives and settles once it leaves; outside every contour nothing is drawn, which
+reads as quiet. The legend under the telemetry gives each contour's area in dunams.
+The map is off until someone asks for it, from the player or the noise tab, so the flight is
+shown on its own first. Tracing a contour switches it on, since tracing blind is hopeless.
+
+Tracing works like waypoints: each click adds a point, Backspace takes the last one back, and
+Enter, Escape or clicking the first point again finishes. With the panel open each point is a
+handle: click it, then click where it goes.
 
 ## 13. Out of scope for v1 (planned)
 

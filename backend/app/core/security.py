@@ -1,5 +1,6 @@
 """Password hashing and session token helpers."""
 
+import hashlib
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from uuid import UUID
@@ -29,6 +30,12 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
+def guest_key() -> str | None:
+    """Changes whenever the guest password does, so changing it signs every guest out."""
+    password = get_settings().guest_password
+    return hashlib.sha256(password.encode()).hexdigest()[:16] if password else None
+
+
 def create_session_token(role: Role, user_id: UUID | None = None) -> str:
     settings = get_settings()
     now = datetime.now(UTC)
@@ -39,6 +46,8 @@ def create_session_token(role: Role, user_id: UUID | None = None) -> str:
     }
     if user_id is not None:
         payload["sub"] = str(user_id)
+    if role is Role.GUEST:
+        payload["key"] = guest_key()
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 

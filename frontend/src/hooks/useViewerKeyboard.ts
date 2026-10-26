@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useViewerStore } from '@/store/viewerStore';
-import { useMissionStore } from '@/store/missionStore';
+import { isTracing, useMissionStore } from '@/store/missionStore';
 
 interface ViewerKeyboardHandlers {
   /** The arrow keys, by the side they point to. What that means depends on what is showing. */
@@ -10,6 +10,8 @@ interface ViewerKeyboardHandlers {
   togglePlay?: () => void;
   /** Enter, while the intro is up. */
   enter: () => void;
+  /** Backspace, while points are being added one after another. */
+  undoPlace: () => void;
 }
 
 const isTyping = (target: EventTarget | null) => {
@@ -23,7 +25,7 @@ const onButton = (target: EventTarget | null) => Boolean((target as HTMLElement 
 /** A dialog is on top and owns the keyboard, including its own Escape. */
 const dialogOpen = () => document.querySelector('[aria-modal="true"]') !== null;
 
-export function useViewerKeyboard({ left, right, togglePlay, enter }: ViewerKeyboardHandlers) {
+export function useViewerKeyboard({ left, right, togglePlay, enter, undoPlace }: ViewerKeyboardHandlers) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (isTyping(event.target) || dialogOpen()) return;
@@ -53,10 +55,17 @@ export function useViewerKeyboard({ left, right, togglePlay, enter }: ViewerKeyb
           break;
         case 'Enter':
           if (state.introVisible) enter();
+          else if (isTracing(mission.placing)) mission.setPlacing(null);
+          break;
+        case 'Backspace':
+          if (isTracing(mission.placing)) {
+            event.preventDefault();
+            undoPlace();
+          }
           break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [left, right, togglePlay, enter]);
+  }, [left, right, togglePlay, enter, undoPlace]);
 }

@@ -28,14 +28,6 @@ export function useLogin() {
   });
 }
 
-export function useJoinAsGuest() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: () => api.post<SessionInfo>('/auth/guest'),
-    onSuccess: (session) => queryClient.setQueryData(queryKeys.session, session),
-  });
-}
-
 export function useLogout() {
   const queryClient = useQueryClient();
   return useMutation({

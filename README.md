@@ -64,6 +64,10 @@ The first editor account comes from `MABAT_INITIAL_EDITOR_USERNAME` / `MABAT_INI
 in `.env` (created when the users table is empty). More editors: the **Editors** button in the gallery,
 or `uv run python -m app.cli create-editor <name>`.
 
+Viewers share one guest account, `MABAT_GUEST_USERNAME` / `MABAT_GUEST_PASSWORD`. It can look at
+everything and change nothing. Changing the password signs every guest out; leaving it empty closes
+guest access.
+
 ## Deploying on the offline Ubuntu host
 
 Docker Compose runs Postgres, the API and nginx (static frontend + `/api` proxy).
@@ -130,6 +134,7 @@ from beyond the model. Everything else is optional and changes the scene as you 
 | טיסה | Cruise altitude and speed, climb rate, hover altitude, tether length (with a check that it reaches), winch speed, release height, time at the drop |
 | כלים | The carrier, the droid and the parcel: their names in the show, real sizes, colours, and your own models (any format the uploads accept; turn them nose first if they fly sideways) |
 | שלבים | Each stage's title, caption and camera, with a button to watch just that stage |
+| רעש | Noise contours from your acoustic study, traced on the ground point by point. In the show, sound rings run out from the drone to each contour's edge, which glows; outside every contour it is quiet. Hidden until you turn it on, from the player or this tab |
 
 Viewers get **צפייה במשימה** on the intro. The player along the bottom has the stages as chapters:
 click to jump, drag to scrub. The camera is cinematic by default; dragging takes over while it keeps
@@ -142,6 +147,7 @@ the show at ½×, 1×, 2× or 4×.
 | `Space` | Play / pause |
 | `→` `←` | Next / previous stage (presenting: plays the stage waiting to start) |
 | `Esc` | Stop placing on the model |
+| `Enter` / `Backspace` | While adding waypoints or tracing a noise contour: finish / take back the last point |
 
 ### The neighbourhood demo
 
