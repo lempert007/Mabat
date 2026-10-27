@@ -35,7 +35,7 @@ export function CarrierCard({ projectId, mission, update }: CarrierCardProps) {
         <Input value={carrier.name} placeholder={t.mission.carrier} maxLength={60} onChange={(event) => change({ name: event.target.value })} />
       </label>
       <NumberField
-        label={copy.wingspan}
+        label={carrier.model ? copy.size : copy.wingspan}
         value={carrier.size}
         min={1}
         max={15}

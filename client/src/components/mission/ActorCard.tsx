@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { ChevronDown, Crosshair, PenLine, Trash2 } from 'lucide-react';
 import { IconButton } from '@/components/ui/IconButton';
 import { Badge } from '@/components/ui/Badge';
@@ -14,10 +15,11 @@ import { LiveryPicker } from './LiveryPicker';
 import { KeyRow } from './KeyRow';
 import { KIND_ICONS } from './actorMeta';
 import { actorTarget, useMissionStore } from '@/store/missionStore';
-import { ACTOR_KINDS, ACTOR_PRESETS } from '@/lib/mission/defaults';
+import { ACTOR_KINDS, ACTOR_PRESETS, BUILT_IN_HEIGHT } from '@/lib/mission/defaults';
 import { facingAt, legSpeed, removeKey, setLeaves } from '@/lib/mission/keys';
 import { actorName } from '@/lib/mission/names';
 import { counted } from '@/lib/counted';
+import { formatMeasure } from '@/lib/format';
 import { fill } from '@/lib/interpolate';
 import { cn } from '@/lib/cn';
 import type { useSceneEditor } from '@/hooks/useSceneEditor';
@@ -61,6 +63,12 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
   const selected = useMissionStore((s) => s.selected);
   const placing = useMissionStore((s) => s.placing);
   const open = selected?.actor === actor.id;
+  const height = useMissionStore((s) => s.heights[actor.id]) ?? BUILT_IN_HEIGHT[actor.kind];
+  const card = useRef<HTMLDivElement>(null);
+  // Picked in the scene, it comes into view in the panel.
+  useEffect(() => {
+    if (open) card.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [open]);
   const following = useMissionStore((s) => open && s.camera === 'follow');
   const target = actorTarget(placing);
   const tracing = target?.actor === actor.id && target.key === undefined;
@@ -97,7 +105,7 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
   };
 
   return (
-    <div className={cn('rounded-2xl border transition-colors duration-200', open ? 'border-line-strong bg-white/5' : 'border-line bg-white/3')}>
+    <div ref={card} className={cn('scroll-my-2 rounded-2xl border transition-colors duration-200', open ? 'border-line-strong bg-white/5' : 'border-line bg-white/3')}>
       <button
         type="button"
         onClick={() => useMissionStore.getState().select(open ? null : { actor: actor.id, key: null })}
@@ -140,9 +148,18 @@ export function ActorCard({ projectId, mission, plan, index, color, editor, onRe
               <LiveryPicker value={actor.color} onChange={(livery) => change({ color: livery })} />
             )}
             <ModelUpload projectId={projectId} model={actor.model} onChange={(model) => change({ model, rotation: null })} />
+            <NumberField
+              label={panel.size}
+              value={actor.size}
+              min={0.1}
+              max={10}
+              step={0.05}
+              limits={[0.05, 100]}
+              unit={t.mission.units.m}
+              onChange={(size) => change({ size })}
+              hint={<p className="text-[12px] text-fg-4">{fill(copy.sizeHint, { height: formatMeasure(actor.size * height, 2) })}</p>}
+            />
           </div>
-
-          <NumberField label={panel.size} value={actor.size} min={0.1} max={6} step={0.05} limits={[0.05, 100]} unit={t.mission.units.m} onChange={(size) => change({ size })} />
 
           <Field label={copy.start}>
             <Select<string>

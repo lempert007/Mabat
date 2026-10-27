@@ -346,6 +346,13 @@ and the panel says the pace of each leg and warns when one is implausibly fast.
   allocates new GPU buffers on every call and the old ones are never freed.
 - Shadows are a soft spot found by one raycast down the BVH per drone, not a shadow map.
   Navigation-light glows are sprites, not bloom.
+- Name tags (`MissionTags`) show only for a vehicle too small on screen to pick out. Tags that
+  would overlap become one listing its vehicles top to bottom (`gatherTags`), standing over the
+  highest, so a stack on the rope reads as one; together they need a wider gap to part, so a tag
+  does not flicker as things drift past each other. All of them hang in one drei `<Html>` pinned
+  to the corner, and their positions are written into their style each frame.
+- drei's `<Html>` lays out its box with absolute CSS, which in a right-to-left page hangs off to
+  the left by the box's own width. Every `<Html>` here pins `left: 0; top: 0` in its style.
 - A model is a tile in the dark, so while a mission plays it gets a ground running to the
   horizon and a gradient sky (`MissionBackdrop`); from a hundred metres up, every shot towards
   the horizon would otherwise see mostly black.
@@ -372,16 +379,24 @@ clicking the model; waypoints keep coming until Escape. Clicking the first drop 
 mission and starts playing it at once. Every place in the route tab has a button that flies the
 camera down onto it. The flight tab says whether the rope reaches the drop.
 
-The ground tab lists the actors. Adding one puts it on whatever came down the rope (on top of
-something that drives, under something that flies) and starts tracing its stops at once, since
-where it goes is the point of adding it. With the tab open, a timeline docks above the player: a
+The ground tab lists the actors. Opening it while the clock is off in the flight brings the
+clock to the moment the load comes down and the camera to the drop, so the stops clicked next
+land in the yard rather than wherever the carrier was. Adding one puts it on whatever came down
+the rope (on top of something that drives, under something that flies) and starts tracing its
+stops at once, since where it goes is the point of adding it. With the tab open, a timeline docks above the player: a
 lane per actor, a bar while it rides, a line per move, a block per wait, a diamond per keyframe.
 Dragging a diamond retimes it and seeks the scene to it, and it snaps to any other actor's moment
 within a few pixels, which is how two things are made to happen together. In the scene each
 actor's path is drawn in its lane's colour with a handle on every keyframe; clicking one picks it
 up and the next click puts it down. The selected actor's keyframes carry an arrow for the way it
-faces there, and clicking an actor in the scene opens it. A keyframe's facing is set on a compass
-dial, or with `[` and `]` in 15° steps; its lean folds away until wanted.
+faces there, and clicking an actor in the scene opens it. A keyframe's stance is three dials side
+by side: its facing on a compass, and its pitch and roll on horizon dials, each with a box for an
+exact number. Facing can also be turned with `[` and `]` in 15° steps. Picking a keyframe moves
+the clock to it, so a dial is turned while watching the actor lean.
+
+Edits go into the query cache and React hears of them inside the same event (`useProjectSettings`),
+not a tick later, or a field being typed into or a slider stepped with the keys is put back to
+its old value in between and loses the input.
 
 Every mission edit can be undone (Ctrl+Z, Ctrl+Shift+Z or Ctrl+Y, or the panel's footer). Edits
 within 700 ms of each other are one step, so a drag or a typed name goes back in one go. Turning

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { defaultScheduler, notifyManager, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/api/queryKeys';
 import { useUpdateProject } from '@/api/projects';
 import { deepEqual } from '@/lib/deepEqual';
@@ -55,9 +55,17 @@ export function useProjectSettings(project: Project) {
         useMissionStore.getState().clearHistory();
       }
       settingsRef.current = next;
-      queryClient.setQueryData<Project>(queryKeys.project(project.id), (current) =>
-        current ? { ...current, settings: next } : current,
-      );
+      // The cache tells React a tick later by default. A field being typed into or a slider
+      // stepped with the keys would be put back to its old value in between, losing the input
+      // and the caret, so this one change is told at once, inside the event that made it.
+      notifyManager.setScheduler((notify) => notify());
+      try {
+        queryClient.setQueryData<Project>(queryKeys.project(project.id), (current) =>
+          current ? { ...current, settings: next } : current,
+        );
+      } finally {
+        notifyManager.setScheduler(defaultScheduler);
+      }
       save(next);
     },
     [queryClient, project.id, save],

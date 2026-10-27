@@ -2,19 +2,25 @@ import { useCallback } from 'react';
 import { Vector3 } from 'three';
 import { useMissionStore } from '@/store/missionStore';
 import { useViewerStore } from '@/store/viewerStore';
-import { aerialPose, fromVector3, toVector3 } from '@/lib/vec';
-import { editActor } from '@/lib/mission/keys';
+import { aerialPose, fromVector3 } from '@/lib/vec';
+import { editActor, footOf, normalOf } from '@/lib/mission/keys';
 import type { MissionChange } from './useMissionSettings';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Actor } from '@/types/api';
 
 /** How close the camera comes to look at a keyframe, metres. */
 const KEY_VIEW = 16;
+/** How far off the camera stands to take in the ground around the drop, metres. */
+const GROUND_VIEW = 45;
 
 /**
  * What the ground panel and the timeline both do to the actors: change one, pick one of its
  * keyframes, and look at it. Picking a keyframe moves the clock to it, so the scene shows the
  * actor standing where that keyframe has it.
+ *
+ * Working on the ground starts at the ground: if the clock and the camera are off in the flight,
+ * they are brought to the moment the load comes down and to the drop, so the places clicked next
+ * land where the actors are rather than wherever the carrier happened to be.
  */
 export function useSceneEditor(plan: MissionPlan, update: (change: MissionChange) => void) {
   const changeActor = useCallback((id: string, edit: (actor: Actor) => Actor) => update(editActor(id, edit)), [update]);
@@ -33,14 +39,14 @@ export function useSceneEditor(plan: MissionPlan, update: (change: MissionChange
   const viewKey = useCallback(
     (actor: Actor, key: number) => {
       const cameraApi = useViewerStore.getState().cameraApi;
-      const { place, lift, normal } = actor.keys[key];
+      const spot = actor.keys[key];
       selectKey(actor, key);
       if (!cameraApi) return;
       useMissionStore.getState().setCamera('free');
       const u = plan.unitsPerMeter;
-      const facing = normal ? toVector3(normal).normalize() : new Vector3(0, 1, 0);
-      const at = toVector3(place).addScaledVector(facing, lift * u);
-      const distance = (KEY_VIEW + lift) * u;
+      const facing = normalOf(spot);
+      const at = footOf(spot, u);
+      const distance = (KEY_VIEW + spot.lift) * u;
       // On the ground, from where the camera already is; on a wall, from in front of it.
       if (facing.y > 0.7) cameraApi.flyTo(aerialPose(cameraApi.getPose().position, fromVector3(at), distance, 0.6));
       else {
@@ -51,5 +57,17 @@ export function useSceneEditor(plan: MissionPlan, update: (change: MissionChange
     [plan, selectKey],
   );
 
-  return { changeActor, selectKey, viewKey };
+  const showGround = useCallback(() => {
+    const store = useMissionStore.getState();
+    const ground = plan.stages.find((stage) => stage.kind === 'onsite');
+    if (!ground || (store.time >= ground.start && store.time <= ground.start + ground.duration)) return;
+    store.pause();
+    store.seek(plan.onsite);
+    const cameraApi = useViewerStore.getState().cameraApi;
+    if (!cameraApi) return;
+    store.setCamera('free');
+    cameraApi.flyTo(aerialPose(cameraApi.getPose().position, fromVector3(plan.drop), GROUND_VIEW * plan.unitsPerMeter, 0.7));
+  }, [plan]);
+
+  return { changeActor, selectKey, viewKey, showGround };
 }

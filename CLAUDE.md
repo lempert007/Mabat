@@ -41,6 +41,9 @@ Read `DESIGN.md` before changing architecture.
   is rarely what it looks like: bloom cost a whole frame budget here for something barely visible.
 - The 3D canvas renders on demand. Anything that changes the picture outside of camera
   movement must call `invalidate()`, or the change will not appear until the next frame.
+- drei's `<Html>` lays out its box with absolute CSS, which in this right-to-left page hangs off
+  to the left by the box's width. Pin it with `left: 0; top: 0` in its `style`, as `PlaceLabel`
+  and `MissionTags` do.
 - Never animate an element's transform with framer-motion and write that same transform by
   hand (see `useDraggable`); pick one owner per property.
 - Tailwind v4 emits `translate`, `rotate` and `scale` as standalone CSS properties, not as

@@ -6,8 +6,8 @@ import { MissionDirector } from './MissionDirector';
 import { CursorPivot } from './CursorPivot';
 import { VehicleModel } from './VehicleModel';
 import { CarrierModel } from './CarrierModel';
-import { VehicleTag } from './VehicleTag';
 import { MissionActors } from './MissionActors';
+import { MissionTags } from './MissionTags';
 import { ActorPaths } from './ActorPaths';
 import { Tether } from './Tether';
 import { FlightPath } from './FlightPath';
@@ -22,7 +22,6 @@ import { missionLive } from '@/store/missionLive';
 import { useMissionStore } from '@/store/missionStore';
 import type { MissionPlan } from '@/lib/mission/types';
 import type { Mission, Project } from '@/types/api';
-import { t } from '@/i18n/he';
 
 interface MissionSceneProps {
   project: Project;
@@ -65,9 +64,9 @@ export function MissionScene({ project, mission, plan }: MissionSceneProps) {
             builtIn={<CarrierModel color={vehicle.color} legs={plan.carrier.legs / plan.carrier.size} />}
           />
         </group>
-        <VehicleTag label={vehicle.name || t.mission.carrier} size={plan.carrier.size} color={vehicle.color} />
       </group>
-      <MissionActors projectId={project.id} mission={mission} plan={plan} />
+      <MissionActors projectId={project.id} plan={plan} />
+      <MissionTags mission={mission} plan={plan} />
       <Tether />
       <FlightPath plan={plan} color={MARKER_COLOR} />
       <DropZone plan={plan} color={MARKER_COLOR} />

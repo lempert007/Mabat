@@ -56,8 +56,9 @@ export function useMissionShortcuts({ open, plan, update, undo, redo }: MissionS
 
       if (event.key === '[' || event.key === ']') {
         event.preventDefault();
-        const heading = wrapDegrees(facingAt(plan, index, keyIndex) + (event.key === ']' ? TURN : -TURN));
-        change((actor) => editKey(actor, keyIndex, { heading }));
+        // From the keyframe as it now stands: a second press can come before the plan catches up.
+        const turn = event.key === ']' ? TURN : -TURN;
+        change((actor) => editKey(actor, keyIndex, { heading: wrapDegrees((actor.keys[keyIndex].heading ?? facingAt(plan, index, keyIndex)) + turn) }));
       } else if (event.key === 'Delete') {
         event.preventDefault();
         useMissionStore.getState().select({ actor: selected.actor, key: null });

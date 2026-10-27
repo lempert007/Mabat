@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { ChevronDown, Crosshair, ScanEye, X } from 'lucide-react';
-import { AngleDial } from '@/components/ui/AngleDial';
+import { useEffect, useRef } from 'react';
+import { Crosshair, ScanEye, X } from 'lucide-react';
+import { AngleField } from '@/components/ui/AngleField';
 import { IconButton } from '@/components/ui/IconButton';
 import { NumberField } from '@/components/ui/NumberField';
 import { ACTOR_PRESETS } from '@/lib/mission/defaults';
@@ -30,19 +30,24 @@ interface KeyRowProps {
 
 const copy = t.mission.scene;
 const units = t.mission.units;
+const LINK = 'rounded-md text-[12px] font-medium text-accent-strong hover:underline focus-ring';
 
 /**
  * One keyframe: when the actor gets there, how high, how long it waits, and how it stands. Closed
  * it is a line to scan; selected, it opens for exact numbers. The pace on the way there is worked
- * out, so a leg timed too tight says so. Facing is left to the motion until the dial is turned,
- * and the dial shows the way it faces either way.
+ * out, so a leg timed too tight says so. How it stands is three dials: facing, which is left to
+ * the motion until it is turned and shows the way it faces either way, then pitch and roll.
  */
 export function KeyRow(props: KeyRowProps) {
   const { actor, index, color, selected, moving, pace, facing, onSelect, onView, onMove, onRemove, onEdit } = props;
   const key = actor.keys[index];
   const turn = (patch: Parameters<typeof editKey>[2]) => onEdit((current) => editKey(current, index, patch));
   const leaning = key.pitch !== 0 || key.roll !== 0;
-  const [tiltOpen, setTiltOpen] = useState(leaning);
+  const row = useRef<HTMLDivElement>(null);
+  // Picked in the scene or on the timeline, it comes into view in the panel.
+  useEffect(() => {
+    if (selected) row.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }, [selected]);
   const [min, max] = keyBounds(actor, index);
   const tooFast = pace !== null && pace > ACTOR_PRESETS[actor.kind].speed * 3;
   const facts = [
@@ -53,7 +58,7 @@ export function KeyRow(props: KeyRowProps) {
   ].filter(Boolean);
 
   return (
-    <div className={cn('rounded-xl border transition-colors duration-200', selected ? 'border-accent/60 bg-accent-soft' : 'border-line bg-white/3')}>
+    <div ref={row} className={cn('scroll-my-2 rounded-xl border transition-colors duration-200', selected ? 'border-accent/60 bg-accent-soft' : 'border-line bg-white/3')}>
       <div className="flex items-center gap-2 py-1.5 pe-1.5 ps-2.5">
         <button type="button" onClick={onSelect} aria-expanded={selected} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg text-start focus-ring">
           <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-black" style={{ background: color }}>
@@ -95,36 +100,29 @@ export function KeyRow(props: KeyRowProps) {
           <NumberField label={copy.lift} value={key.lift} min={0} max={60} step={0.5} limits={[0, 500]} unit={units.m} onChange={(lift) => turn({ lift })} />
           <NumberField label={copy.hold} value={key.hold} min={0} max={30} step={0.5} limits={[0, 600]} unit={units.s} onChange={(hold) => onEdit((current) => setHold(current, index, hold))} />
 
-          <div className="flex items-center gap-3 rounded-xl bg-white/4 p-2.5">
-            <AngleDial label={copy.facing} value={facing} implied={key.heading === null} onChange={(heading) => turn({ heading })} />
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <span className="text-[13px] text-fg-2">
-                {copy.facing} <bdi className="ms-1 tabular-nums text-fg">{Math.round(facing)}°</bdi>
-              </span>
-              <span className="text-[12px] leading-snug text-fg-3">{key.heading === null ? copy.facingAuto : copy.facingSet}</span>
-              {key.heading !== null && (
-                <button type="button" onClick={() => turn({ heading: null })} className="self-start rounded-md text-[12px] font-medium text-accent-strong hover:underline focus-ring">
-                  {copy.facingReset}
-                </button>
-              )}
+          <div className="flex flex-col gap-2.5 rounded-xl bg-white/4 p-2.5">
+            <span className="text-[13px] text-fg-2">{copy.stance}</span>
+            <div className="grid grid-cols-3">
+              <AngleField label={copy.facing} value={facing} implied={key.heading === null} onChange={(heading) => turn({ heading })} />
+              <AngleField label={copy.pitch} value={key.pitch} limit={90} look="level" onChange={(pitch) => turn({ pitch })} />
+              <AngleField label={copy.roll} value={key.roll} look="level" onChange={(roll) => turn({ roll })} />
             </div>
+            <p className="text-[12px] leading-snug text-fg-3">{key.heading === null ? copy.facingAuto : copy.facingSet}</p>
+            {(key.heading !== null || leaning) && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {key.heading !== null && (
+                  <button type="button" onClick={() => turn({ heading: null })} className={LINK}>
+                    {copy.facingReset}
+                  </button>
+                )}
+                {leaning && (
+                  <button type="button" onClick={() => turn({ pitch: 0, roll: 0 })} className={LINK}>
+                    {copy.level}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
-
-          <button
-            type="button"
-            onClick={() => setTiltOpen(!tiltOpen)}
-            aria-expanded={tiltOpen}
-            className="flex items-center justify-between rounded-lg text-[13px] text-fg-2 hover:text-fg focus-ring"
-          >
-            {copy.tilt}
-            <ChevronDown size={14} className={cn('transition-transform duration-200', tiltOpen && 'rotate-180')} />
-          </button>
-          {tiltOpen && (
-            <>
-              <NumberField label={copy.pitch} value={key.pitch} min={-90} max={90} limits={[-90, 90]} unit="°" onChange={(pitch) => turn({ pitch })} />
-              <NumberField label={copy.roll} value={key.roll} min={-180} max={180} limits={[-180, 180]} unit="°" onChange={(roll) => turn({ roll })} />
-            </>
-          )}
         </div>
       )}
     </div>

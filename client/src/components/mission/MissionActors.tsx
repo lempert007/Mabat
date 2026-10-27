@@ -2,19 +2,15 @@ import { useRef } from 'react';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import type { Group } from 'three';
 import { VehicleModel } from './VehicleModel';
-import { VehicleTag } from './VehicleTag';
 import { DroneModel } from './DroneModel';
 import { RoverModel } from './RoverModel';
 import { ParcelModel } from './ParcelModel';
 import { missionLive } from '@/store/missionLive';
 import { useMissionStore } from '@/store/missionStore';
-import { actorName } from '@/lib/mission/names';
 import type { MissionPlan } from '@/lib/mission/types';
-import type { Mission } from '@/types/api';
 
 interface MissionActorsProps {
   projectId: string;
-  mission: Mission;
   plan: MissionPlan;
 }
 
@@ -22,7 +18,7 @@ interface MissionActorsProps {
  * Everything on the rope and on the ground, each put where the plan says it is this moment.
  * While the mission is edited, clicking one opens it in the panel.
  */
-export function MissionActors({ projectId, mission, plan }: MissionActorsProps) {
+export function MissionActors({ projectId, plan }: MissionActorsProps) {
   const groups = useRef<(Group | null)[]>([]);
   const editing = useMissionStore((s) => s.editing);
   const canvas = useThree((s) => s.gl.domElement);
@@ -70,12 +66,6 @@ export function MissionActors({ projectId, mission, plan }: MissionActorsProps) 
             <group scale={size}>
               <VehicleModel projectId={projectId} model={actor.model} rotation={actor.rotation} measures={actor.id} builtIn={builtIn} />
             </group>
-            <VehicleTag
-              label={actorName(mission, i)}
-              size={size}
-              color={actor.color}
-              hidden={() => (pose()?.attached ?? true) && (missionLive.frame?.payout ?? 0) < 0.05}
-            />
           </group>
         );
       })}

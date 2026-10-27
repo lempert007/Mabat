@@ -5,6 +5,7 @@ import { Quaternion, Vector3 } from 'three';
 import { PlaceLabel } from './PlaceLabel';
 import { isTracing, useMissionStore } from '@/store/missionStore';
 import { TRACK_COLORS } from '@/lib/mission/defaults';
+import { footOf, normalOf } from '@/lib/mission/keys';
 import { UP } from '@/lib/mission/track';
 import { toVector3 } from '@/lib/vec';
 import { formatCue } from '@/lib/format';
@@ -15,7 +16,7 @@ import type { MissionPlan } from '@/lib/mission/types';
  * and a handle at every keyframe. Something flying gets a stalk down to the spot it was set
  * over. Clicking a handle selects that keyframe and picks it up; the next click on the model
  * puts it down. The selected actor's keyframes carry their number and time, and an arrow for
- * the way it faces there.
+ * the way it faces there. Keyframes in one place, such as a turn on the spot, share a label.
  */
 export function ActorPaths({ plan }: { plan: MissionPlan }) {
   const selected = useMissionStore((s) => s.selected);
@@ -28,6 +29,19 @@ export function ActorPaths({ plan }: { plan: MissionPlan }) {
     if (chosenIndex === -1) return [];
     return plan.cast[chosenIndex].actor.keys.map((key) => plan.sample(plan.onsite + key.at).actors[chosenIndex].quaternion.clone());
   }, [plan, chosenIndex]);
+
+  const labels = useMemo(() => {
+    const merged: { at: Vector3; text: string }[] = [];
+    if (chosenIndex === -1) return merged;
+    plan.cast[chosenIndex].actor.keys.forEach((key, k) => {
+      const at = footOf(key, u);
+      const text = `${k + 1} · ${formatCue(key.at)}`;
+      const same = merged.find((label) => label.at.distanceTo(at) < 0.3 * u);
+      if (same) same.text += ` / ${text}`;
+      else merged.push({ at, text });
+    });
+    return merged;
+  }, [plan, chosenIndex, u]);
 
   const pick = (actor: string, key: number) => (event: ThreeEvent<MouseEvent>) => {
     const store = useMissionStore.getState();
@@ -50,9 +64,9 @@ export function ActorPaths({ plan }: { plan: MissionPlan }) {
               <Line points={track.points} color={color} lineWidth={chosen ? 2.5 : 1.5} transparent opacity={chosen ? 0.95 : 0.6} depthWrite={false} />
             )}
             {actor.keys.map((key, k) => {
-              const normal = key.normal ? toVector3(key.normal).normalize() : UP;
+              const normal = normalOf(key);
               const ground = toVector3(key.place).addScaledVector(normal, 0.05 * u);
-              const aloft = toVector3(key.place).addScaledVector(normal, key.lift * u);
+              const aloft = footOf(key, u);
               const active = chosen && selected?.key === k;
               return (
                 <group key={k}>
@@ -69,7 +83,6 @@ export function ActorPaths({ plan }: { plan: MissionPlan }) {
                     <sphereGeometry args={[(active || moving === k ? 0.34 : 0.24) * u, 16, 12]} />
                     <meshBasicMaterial color={moving === k ? '#ffffff' : color} toneMapped={false} />
                   </mesh>
-                  {chosen && <PlaceLabel at={aloft}>{`${k + 1} · ${formatCue(key.at)}`}</PlaceLabel>}
                   {chosen && stances[k] && <FacingArrow at={aloft} stance={stances[k]} color={color} size={u} />}
                 </group>
               );
@@ -77,6 +90,11 @@ export function ActorPaths({ plan }: { plan: MissionPlan }) {
           </group>
         );
       })}
+      {labels.map((label) => (
+        <PlaceLabel key={label.text} at={label.at}>
+          {label.text}
+        </PlaceLabel>
+      ))}
     </>
   );
 }

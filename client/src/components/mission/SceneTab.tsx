@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PanelSection } from '@/components/viewer/PanelSection';
@@ -28,6 +29,9 @@ const MAX_ACTORS = 8;
  */
 export function SceneTab({ projectId, mission, plan, update }: SceneTabProps) {
   const editor = useSceneEditor(plan, update);
+  // Once, as the tab opens: later edits must not pull the clock or the camera away.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => editor.showGround(), []);
 
   // Whatever is added comes down with the load: on the rope if it is free, otherwise riding the
   // load, on top of something that drives and under something that flies. Tracing starts at
@@ -39,6 +43,7 @@ export function SceneTab({ projectId, mission, plan, update }: SceneTabProps) {
       mount: load?.kind === 'drone' ? 'below' : 'above',
     };
     update((current) => ({ actors: [...current.actors, actor] }));
+    editor.showGround();
     const store = useMissionStore.getState();
     store.select({ actor: actor.id, key: null });
     store.setPlacing({ actor: actor.id });

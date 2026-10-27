@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo } from 'react';
 import { useAnimations, useGLTF } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Box3, Group, Vector3 } from 'three';
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { useMissionStore } from '@/store/missionStore';
 import type { Quaternion } from '@/types/api';
 
@@ -26,9 +27,11 @@ export function UploadedModel({ url, rotation, measures }: UploadedModelProps) {
   const setHeight = useMissionStore((s) => s.setHeight);
   const invalidate = useThree((s) => s.invalidate);
 
+  // A copy of its own, so the same upload can stand in for several things at once.
+  const copy = useMemo(() => clone(scene), [scene]);
   const fitted = useMemo(() => {
     const turned = new Group();
-    turned.add(scene);
+    turned.add(copy);
     if (rotation) turned.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
     turned.updateMatrixWorld(true);
     const box = new Box3().setFromObject(turned);
@@ -40,9 +43,9 @@ export function UploadedModel({ url, rotation, measures }: UploadedModelProps) {
     turned.position.copy(centre).multiplyScalar(-1);
     holder.scale.setScalar(1 / longest);
     return { holder, height: size.y / longest };
-  }, [scene, rotation]);
+  }, [copy, rotation]);
 
-  const { actions, mixer } = useAnimations(animations, scene);
+  const { actions, mixer } = useAnimations(animations, copy);
   useLayoutEffect(() => {
     for (const action of Object.values(actions)) action?.play();
   }, [actions]);

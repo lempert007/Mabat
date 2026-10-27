@@ -1,8 +1,8 @@
 import { MathUtils, Quaternion, Vector3 } from 'three';
 import { BUILT_IN_HEIGHT } from './defaults';
+import { footOf, normalOf } from './keys';
 import { makeTrack, UP, yawOf, type TrackNode, type TrackPose } from './track';
 import type { ActorPose, CastMember, MissionFrame, ModelHeights } from './types';
-import { toVector3 } from '@/lib/vec';
 import type { Actor } from '@/types/api';
 
 type Ride = 'hook' | number | null;
@@ -114,10 +114,9 @@ const FORWARD = new Vector3(0, 0, 1);
 
 /** A keyframe as a place on the track: off its surface by its lift, standing on it if it follows surfaces. */
 function keyNode(actor: Actor, key: Actor['keys'][number], half: number, onsite: number, u: number): TrackNode {
-  const normal = key.normal ? toVector3(key.normal).normalize() : UP.clone();
-  const up = actor.followsSurface ? normal : UP.clone();
+  const up = actor.followsSurface ? normalOf(key) : UP.clone();
   return {
-    position: toVector3(key.place).addScaledVector(normal, key.lift * u).addScaledVector(up, half),
+    position: footOf(key, u).addScaledVector(up, half),
     arrive: onsite + key.at,
     leave: onsite + key.at + key.hold,
     aloft: key.lift > 0.05,

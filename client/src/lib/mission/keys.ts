@@ -17,9 +17,11 @@ export const wrapDegrees = (degrees: number) => MathUtils.euclideanModulo(degree
 
 const end = (key: Keyframe) => key.at + key.hold;
 
+/** The surface a keyframe was set on faces this way; straight up if it was not recorded. */
+export const normalOf = (key: Pick<Keyframe, 'normal'>) => (key.normal ? toVector3(key.normal).normalize() : UP.clone());
+
 /** Where a keyframe holds an actor's foot: off its surface by its lift. */
-const footOf = (place: Vec3, normal: Vec3 | null, lift: number, u: number) =>
-  toVector3(place).addScaledVector(normal ? toVector3(normal).normalize() : UP, lift * u);
+export const footOf = (key: Pick<Keyframe, 'place' | 'normal' | 'lift'>, u: number) => toVector3(key.place).addScaledVector(normalOf(key), key.lift * u);
 
 /** Where an actor's foot is at a moment of the ground's own time. */
 function footAt(plan: MissionPlan, index: number, time: number): Vector3 {
@@ -101,9 +103,9 @@ export function withNextKey(plan: MissionPlan, actor: Actor, index: number, plac
 
   const ride = plan.cast.find((member) => member.actor.id === actor.rides)?.actor.keys.at(-1);
   const from = last ? end(last) : rider && ride ? end(ride) : 0;
-  const start = last ? footOf(last.place, last.normal, last.lift, u) : footAt(plan, index, from);
+  const start = last ? footOf(last, u) : footAt(plan, index, from);
   const lift = last?.lift ?? preset.lift;
-  const travel = Math.max(1, start.distanceTo(footOf(place, normal, lift, u)) / u / preset.speed);
+  const travel = Math.max(1, start.distanceTo(footOf({ place, normal, lift }, u)) / u / preset.speed);
   return {
     ...actor,
     leaves: rider && !last ? from : actor.leaves,
@@ -129,7 +131,7 @@ export function legSpeed(plan: MissionPlan, index: number, key: number): number 
   if (!before && actor.rides === null) return null;
   const u = plan.unitsPerMeter;
   const leftAt = before ? end(before) : actor.rides === 'hook' ? 0 : actor.leaves;
-  const from = before ? footOf(before.place, before.normal, before.lift, u) : footAt(plan, index, leftAt);
+  const from = before ? footOf(before, u) : footAt(plan, index, leftAt);
   const time = target.at - leftAt;
-  return time > 0 ? from.distanceTo(footOf(target.place, target.normal, target.lift, u)) / u / time : null;
+  return time > 0 ? from.distanceTo(footOf(target, u)) / u / time : null;
 }
